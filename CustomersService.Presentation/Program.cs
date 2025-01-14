@@ -1,5 +1,5 @@
 
-namespace CustomersService
+namespace CustomersService.Presentation
 {
     public class Program
     {
