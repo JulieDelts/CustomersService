@@ -1,22 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CustomersService.Persistence.Entities
+﻿namespace CustomersService.Presentation.Models.Responses
 {
-    public enum Role
-    {
-        Customer = 1,
-        VipCustomer = 2,
-        Moderator = 3,
-        Admin = 4
-    }
-    public class Customer
+    public class CustomerResponse
     {
         public Guid Id { get; set; }
-        public Role Role { get; set; }
         public string Phone { get; set; }
         public string Address { get; set; }
         public string Email { get; set; }

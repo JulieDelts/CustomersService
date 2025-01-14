@@ -1,83 +1,40 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CustomersService.Presentation.Models.Requests;
+using CustomersService.Presentation.Models.Responses;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CustomersService.Presentation.Controllers
+namespace CustomersService.Presentation.Controllers;
+
+[Route("api/Account")]
+[ApiController]
+public class AccountController : Controller
 {
-    public class AccountController : Controller
+    [HttpPost]
+    public ActionResult<Guid> AccountAdd([FromBody] AccountAddRequest request)
     {
-        // GET: AccountController
-        public ActionResult Index()
-        {
-            return View();
-        }
+        var last = new Guid();
+        return Ok(last);
+    }
+    [HttpPut("{id}")]
+    public IActionResult AccountUpdate([FromRoute] Guid id, [FromBody] AccountUpdateRequest request)
+    {
+        return NoContent();
+    }
+    [HttpGet("{id}")]
+    public ActionResult<AccountResponse> GetAccount([FromRoute] Guid id)
+    {
+        var customer = new CustomerResponse();
+        return Ok(customer);
+    }
+    [HttpGet]
+    public ActionResult<List<AccountResponse>> GetAccounts()
+    {
 
-        // GET: AccountController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        // GET: AccountController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: AccountController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: AccountController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: AccountController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: AccountController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: AccountController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
+        return Ok();
+    }
+    [HttpDelete("{id}")]
+    public ActionResult DeleteAccount([FromRoute] Guid id)
+    {
+        return NoContent();
     }
 }

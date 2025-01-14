@@ -1,83 +1,49 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using CustomersService.Presentation.Models.Requests;
+using CustomersService.Presentation.Models.Responses;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace CustomersService.Presentation.Controllers
+namespace CustomersService.Presentation.Controllers;
+
+public class CustomerController : Controller
 {
-    public class CustomerController : Controller
+    [HttpPost]
+    public ActionResult<Guid> Register([FromBody] RegisterCustomerRequest request)
     {
-        // GET: CustomerController
-        public ActionResult Index()
-        {
-            return View();
-        }
+        var last = new Guid();
+        return Ok(last);
+    }
 
-        // GET: CustomerController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
+    [HttpPost("login"), Authorize]
+    public IActionResult Login([FromBody] LoginRequest request)
+    {
+        return Ok();
+    }
+    [HttpGet("{id}")]
+    public ActionResult<CustomerWithResponse> GetCustomerById([FromRoute] Guid id)
+    {
+        var user = new UserWithResponse();
+        return Ok(user);
+    }
+    [HttpGet]
+    public ActionResult<List<CustomerResponse>> GetCustomers()
+    {
 
-        // GET: CustomerController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: CustomerController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: CustomerController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
-        }
-
-        // POST: CustomerController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: CustomerController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: CustomerController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
+        return Ok();
+    }
+    [HttpPut("{id}")]
+    public IActionResult UpdateCustomer([FromRoute] Guid id, [FromBody] CustomerUpdateRequest request)
+    {
+        return NoContent();
+    }
+    [HttpDelete("{id}")]
+    public ActionResult DeleteCustomer([FromRoute] Guid id)
+    {
+        return NoContent();
+    }
+    [HttpPatch("{id}/Deactivate)")]
+    public IActionResult DiactivateCustomer([FromRoute] Guid id)
+    {
+        return NoContent();
     }
 }
