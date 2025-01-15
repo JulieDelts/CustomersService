@@ -1,4 +1,6 @@
-﻿namespace CustomersService.Presentation.Models.Requests
+﻿using CustomersService.Persistence.Entities;
+
+namespace CustomersService.Presentation.Models.Requests
 {
     public class CustomerUpdateRequest
     {
