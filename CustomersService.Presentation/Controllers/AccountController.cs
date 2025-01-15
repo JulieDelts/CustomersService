@@ -27,7 +27,7 @@ public class AccountController : Controller
         return Ok(customer);
     }
     [HttpGet]
-    public ActionResult<List<AccountResponse>> GetAccounts()
+    public ActionResult<List<AccountResponse>> GetAllAccounts()
     {
 
         return Ok();

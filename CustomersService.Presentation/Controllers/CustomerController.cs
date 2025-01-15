@@ -14,7 +14,7 @@ public class CustomerController : Controller
         return Ok(last);
     }
 
-    [HttpPost("login"), Authorize]
+    [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
         return Ok();
@@ -22,7 +22,7 @@ public class CustomerController : Controller
     [HttpGet("{id}")]
     public ActionResult<CustomerWithResponse> GetCustomerById([FromRoute] Guid id)
     {
-        var user = new UserWithResponse();
+        var user = new CustomerWithResponse();
         return Ok(user);
     }
     [HttpGet]
