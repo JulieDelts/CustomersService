@@ -10,6 +10,7 @@ namespace CustomersService.Presentation.Models.Requests.Validators
             RuleFor(model => model.CustomerId).NotEmpty();
             RuleFor(model => model.DateCreated).NotEmpty();
             RuleFor(model => model.Status).NotEmpty();
+            RuleFor(model => model.Currency).NotEmpty();
         }
     }
 }

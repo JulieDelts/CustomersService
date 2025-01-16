@@ -1,5 +1,4 @@
 ﻿using FluentValidation;
-using System.Reflection;
 
 namespace CustomersService.Presentation.Models.Requests.Validators
 {
@@ -8,6 +7,7 @@ namespace CustomersService.Presentation.Models.Requests.Validators
         public AccountUpdateRequestValidator()
         {
             RuleFor(model => model.Status).NotEmpty();
+            RuleFor(model => model.Currency).NotEmpty();
         }
     }
 }

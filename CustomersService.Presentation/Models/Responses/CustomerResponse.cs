@@ -1,8 +1,11 @@
-﻿namespace CustomersService.Presentation.Models.Responses
+﻿using CustomersService.Core.Enum;
+
+namespace CustomersService.Presentation.Models.Responses
 {
     public class CustomerResponse
     {
         public Guid Id { get; set; }
+        public CustomerRole Role { get; set; }
         public string Phone { get; set; }
         public string Address { get; set; }
         public string Email { get; set; }

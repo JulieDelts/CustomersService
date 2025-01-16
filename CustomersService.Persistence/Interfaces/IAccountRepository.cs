@@ -1,19 +1,15 @@
 ﻿using CustomersService.Persistence.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CustomersService.Persistence.Interfaces
 {
     public interface IAccountRepository
     {
-        Task<Account> GetAccountById(int id);
-        IEnumerable<Account> GetAllAccounts();
-        void CreateAccount(Account account);
+        Task<Account> GetAccountById(Guid id);
+        List<Account> GetAllAccounts();
+        void CreateAccount(Guid id);
         void UpdateAccount(Account account);
-        void DeleteAccount(int id);
+        void DeactivateAccount(Account account);
+        void DeleteAccount(Guid id);
     }
 }
 

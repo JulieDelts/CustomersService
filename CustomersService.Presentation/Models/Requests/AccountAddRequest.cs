@@ -2,9 +2,9 @@
 {
     public class AccountAddRequest
     {
-        public Guid Id { get; set; }
         public Guid CustomerId { get; set; }
         public DateTime DateCreated { get; set; }
+        public string Currency { get; set; }
         public string Status { get; set; } = "Is Actived";
     }
 }

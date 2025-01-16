@@ -2,6 +2,7 @@
 {
     public class AccountUpdateRequest
     {
-        public string Status { get; set; } 
+        public string Status { get; set; }
+        public string Currency { get; set; }
     }
 }

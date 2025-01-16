@@ -12,4 +12,8 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CustomersService.Core\CustomersService.Core.csproj" />
+  </ItemGroup>
+
 </Project>
