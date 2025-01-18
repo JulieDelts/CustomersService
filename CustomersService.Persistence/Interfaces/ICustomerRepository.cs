@@ -4,10 +4,10 @@ namespace CustomersService.Persistence.Interfaces
 {
     public interface ICustomerRepository
     {
-        Task<Customer> GetCustomerById(int id);
+        Task<Customer> GetCustomerById(Guid id);
         List<Customer> GetAllCustomers();
-        void CreateCustomer(Customer customer);
+        Guid CreateCustomer(Customer customer);
         void UpdateCustomer(Customer customer);
-        void DeleteCustomer(int id);
+        void DeleteCustomer(Guid id);
     }
 }
