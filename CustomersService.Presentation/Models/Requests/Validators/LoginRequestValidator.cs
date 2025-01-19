@@ -6,8 +6,8 @@ namespace CustomersService.Presentation.Models.Requests.Validators
     {
         public LoginRequestValidator()
         {
-            RuleFor(model => model.Email).EmailAddress().WithMessage("Этот email не email");
-            RuleFor(model => model.Password).MinimumLength(8);
+            RuleFor(model => model.Email).NotNull().EmailAddress();
+            RuleFor(model => model.Password).NotNull().Length(8, 15);
         }
     }
 }

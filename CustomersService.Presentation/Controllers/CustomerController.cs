@@ -1,48 +1,66 @@
 ﻿using CustomersService.Presentation.Models.Requests;
 using CustomersService.Presentation.Models.Responses;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CustomersService.Presentation.Controllers;
 
-public class CustomerController : Controller
+[ApiController]
+[Route("api/customers")]
+public class CustomerController : ControllerBase
 {
     [HttpPost]
-    public ActionResult<Guid> Register([FromBody] RegisterCustomerRequest request)
+    public async Task<ActionResult<Guid>> RegisterAsync([FromBody] RegisterCustomerRequest request)
     {
         var last = new Guid();
         return Ok(last);
     }
 
     [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
+    public async Task<ActionResult<string>> LoginAsync([FromBody] LoginRequest request)
+    {
+        var token = string.Empty;
+        return Ok(token);
+    }
+
+    [HttpGet]
+    public async Task<ActionResult<List<CustomerResponse>>> GetAllAsync()
     {
         return Ok();
     }
+
     [HttpGet("{id}")]
-    public ActionResult<CustomerWithResponse> GetCustomerById([FromRoute] Guid id)
+    public async Task<ActionResult<CustomerResponse>> GetByIdAsync([FromRoute] Guid id)
     {
-        var user = new CustomerWithResponse();
+        var user = new CustomerResponse();
         return Ok(user);
     }
-    [HttpGet]
-    public ActionResult<List<CustomerResponse>> GetCustomers()
-    {
 
-        return Ok();
-    }
     [HttpPut("{id}")]
-    public IActionResult UpdateCustomer([FromRoute] Guid id, [FromBody] CustomerUpdateRequest request)
+    public async Task<IActionResult> UpdateProfileAsync([FromRoute] Guid id, [FromBody] CustomerUpdateRequest request)
     {
         return NoContent();
     }
+
+    [HttpPatch("{id}/password")]
+    public async Task<IActionResult> UpdatePasswordAsync([FromRoute] Guid id, [FromBody] PasswordUpdateRequest request)
+    {
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/activate)")]
+    public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
+    {
+        return NoContent();
+    }
+
+    [HttpPatch("{id}/deactivate)")]
+    public async Task<IActionResult> DeactivateAsync([FromRoute] Guid id)
+    {
+        return NoContent();
+    }
+
     [HttpDelete("{id}")]
-    public ActionResult DeleteCustomer([FromRoute] Guid id)
-    {
-        return NoContent();
-    }
-    [HttpPatch("{id}/Deactivate)")]
-    public IActionResult DiactivateCustomer([FromRoute] Guid id)
+    public async Task<IActionResult> DeleteAsync([FromRoute] Guid id)
     {
         return NoContent();
     }

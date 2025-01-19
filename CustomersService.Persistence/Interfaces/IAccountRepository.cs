@@ -4,12 +4,12 @@ namespace CustomersService.Persistence.Interfaces
 {
     public interface IAccountRepository
     {
-        Task<Account> GetAccountById(Guid id);
-        List<Account> GetAllAccounts();
-        void CreateAccount(Guid id);
-        void UpdateAccount(Account account);
-        void DeactivateAccount(Account account);
-        void DeleteAccount(Guid id);
+        Task<Guid> CreateAsync(Account account);
+        Task<List<Account>> GetAllAsync();
+        Task<Account> GetByIdAsync(Guid id);
+        Task ActivateAsync(Account account);
+        Task DeactivateAsync(Account account);
+        Task DeleteAsync(Account account);
     }
 }
 

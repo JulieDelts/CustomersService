@@ -6,6 +6,6 @@
         public Guid CustomerId { get; set; }
         public DateTime DateCreated { get; set; }
         public string Currency { get; set; }
-        public bool Status { get; set; } 
+        public bool IsDeactivated { get; set; } 
     }
 }

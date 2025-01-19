@@ -5,26 +5,42 @@ namespace CustomersService.Persistence.Repositories
 {
     public class CustomerRepository : ICustomerRepository
     {
-        public Guid CreateCustomer(Customer customer)
+        public async Task<Guid> CreateAsync(Customer customer)
         {
             throw new NotImplementedException();
         }
 
-        public void DeleteCustomer(Guid id)
+        public async Task<List<Customer>> GetAllAsync()
         {
             throw new NotImplementedException();
         }
 
-        public List<Customer> GetAllCustomers()
+        public async Task<Customer> GetByIdAsync(Guid id)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Customer> GetCustomerById(Guid id)
+        public async Task UpdateProfileAsync(Customer customer, Customer customerUpdate)
         {
             throw new NotImplementedException();
         }
-        void ICustomerRepository.UpdateCustomer(Customer customer)
+
+        public async Task UpdatePasswordAsync(Customer customer, string newPassword)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task ActivateAsync(Customer customer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task DeactivateAsync(Customer customer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task DeleteAsync(Customer customer)
         {
             throw new NotImplementedException();
         }

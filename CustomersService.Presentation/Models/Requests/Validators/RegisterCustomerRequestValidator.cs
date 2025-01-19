@@ -6,13 +6,13 @@ namespace CustomersService.Presentation.Models.Requests.Validators
     {
         public RegisterCustomerRequestValidator()
         {
-            RuleFor(model => model.Phone).Length(11);
-            RuleFor(model => model.Password).MinimumLength(8);
-            RuleFor(model => model.Email).EmailAddress().MaximumLength(50).MinimumLength(3);
+            RuleFor(model => model.Email).NotNull().EmailAddress();
+            RuleFor(model => model.Password).NotNull().Length(8, 15);
             RuleFor(model => model.BirthDate).NotEmpty();
-            RuleFor(model => model.FirstName).NotEmpty();
-            RuleFor(model => model.LastName).NotEmpty();
-            RuleFor(model => model.Address).NotEmpty();
+            RuleFor(model => model.Phone).NotEmpty().Length(11);
+            RuleFor(model => model.Address).NotEmpty().Length(10, 100);
+            RuleFor(model => model.FirstName).NotEmpty().Length(1, 20);
+            RuleFor(model => model.LastName).NotEmpty().Length(1, 20);
         }
     }
 }

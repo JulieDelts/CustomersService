@@ -1,47 +1,36 @@
 ﻿using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 
-
 namespace CustomersService.Persistence.Repositories
 {
     public class AccountRepository : IAccountRepository
     {
-        public void CreateAccount(Guid id)
+        public async Task<Guid> CreateAsync(Account account)
+        {
+            return Guid.NewGuid();
+        }
+
+        public async Task<List<Account>> GetAllAsync()
         {
             throw new NotImplementedException();
         }
 
-        public void DeleteAccount(int id)
+        public async Task<Account> GetByIdAsync(Guid id)
         {
             throw new NotImplementedException();
         }
 
-        public void DeleteAccount(Guid id)
+        public async Task ActivateAsync(Account account)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Account> GetAccountById(int id)
+        public async Task DeactivateAsync(Account account)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Account> GetAccountById(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UpdateAccount(Account account)
-        {
-            throw new NotImplementedException();
-        }
-
-        void IAccountRepository.DeactivateAccount(Account account)
-        {
-            throw new NotImplementedException();
-        }
-
-        List<Account> IAccountRepository.GetAllAccounts()
+        public async Task DeleteAsync(Account account)
         {
             throw new NotImplementedException();
         }

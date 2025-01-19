@@ -1,39 +1,47 @@
 ﻿using CustomersService.Presentation.Models.Requests;
 using CustomersService.Presentation.Models.Responses;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CustomersService.Presentation.Controllers;
 
-[Route("api/Account")]
+[Route("api/accounts")]
 [ApiController]
-public class AccountController : Controller
+public class AccountController : ControllerBase
 {
     [HttpPost]
-    public ActionResult<Guid> AccountAdd([FromBody] AccountAddRequest request)
+    public async Task<ActionResult<Guid>> CreateAsync([FromBody] AccountAddRequest request)
     {
         var last = new Guid();
         return Ok(last);
     }
-    [HttpPut("{id}")]
-    public IActionResult AccountUpdate([FromRoute] Guid id, [FromBody] AccountUpdateRequest request)
+
+    [HttpGet]
+    public async Task<ActionResult<List<AccountResponse>>> GetAllAsync()
+    {
+        return Ok();
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<AccountResponse>> GetByIdAsync([FromRoute] Guid id)
+    {
+        var customer = new AccountResponse();
+        return Ok(customer);
+    }
+
+    [HttpPatch("{id}/activate)")]
+    public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
     {
         return NoContent();
     }
-    [HttpGet("{id}")]
-    public ActionResult<AccountResponse> GetAccount([FromRoute] Guid id)
-    {
-        var customer = new CustomerResponse();
-        return Ok(customer);
-    }
-    [HttpGet]
-    public ActionResult<List<AccountResponse>> GetAllAccounts()
-    {
 
-        return Ok();
+    [HttpPatch("{id}/deactivate")]
+    public async Task<IActionResult> DeactivateAsync([FromRoute] Guid id)
+    {
+        return NoContent();
     }
+
     [HttpDelete("{id}")]
-    public ActionResult DeleteAccount([FromRoute] Guid id)
+    public async Task<IActionResult> DeleteAsync([FromRoute] Guid id)
     {
         return NoContent();
     }
