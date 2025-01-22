@@ -3,34 +3,14 @@ using CustomersService.Persistence.Interfaces;
 
 namespace CustomersService.Persistence.Repositories
 {
-    public class AccountRepository : IAccountRepository
+    public class AccountRepository(CustomerServiceDbContext context) : BaseRepository<Account>(context), IAccountRepository
     {
-        public async Task<Guid> CreateAsync(Account account)
-        {
-            return Guid.NewGuid();
-        }
-
-        public async Task<List<Account>> GetAllAsync()
+        public override async Task ActivateAsync(Account account)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<Account> GetByIdAsync(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task ActivateAsync(Account account)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task DeactivateAsync(Account account)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task DeleteAsync(Account account)
+        public override async Task DeactivateAsync(Account account)
         {
             throw new NotImplementedException();
         }

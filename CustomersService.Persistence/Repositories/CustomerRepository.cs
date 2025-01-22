@@ -3,23 +3,8 @@ using CustomersService.Persistence.Interfaces;
 
 namespace CustomersService.Persistence.Repositories
 {
-    public class CustomerRepository : ICustomerRepository
+    public class CustomerRepository(CustomerServiceDbContext context) : BaseRepository<Customer>(context), ICustomerRepository
     {
-        public async Task<Guid> CreateAsync(Customer customer)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<List<Customer>> GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<Customer> GetByIdAsync(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task UpdateProfileAsync(Customer customer, Customer customerUpdate)
         {
             throw new NotImplementedException();
@@ -30,17 +15,12 @@ namespace CustomersService.Persistence.Repositories
             throw new NotImplementedException();
         }
 
-        public async Task ActivateAsync(Customer customer)
+        public override async Task ActivateAsync(Customer customer)
         {
             throw new NotImplementedException();
         }
 
-        public async Task DeactivateAsync(Customer customer)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task DeleteAsync(Customer customer)
+        public override async Task DeactivateAsync(Customer customer)
         {
             throw new NotImplementedException();
         }
