@@ -8,15 +8,16 @@ internal class AccountConfiguration : IEntityTypeConfiguration<Account>
 {
     public void Configure(EntityTypeBuilder<Account> builder)
     {
-        builder.ToTable("Account")
-       .HasKey(p => p.Id);
+        builder.HasKey(p => p.Id);
 
         builder.Property(p => p.Id)
         .IsRequired()
         .ValueGeneratedOnAdd();
 
         builder.Property(p => p.DateCreated)
-        .IsRequired();
+        .IsRequired()
+        .HasColumnType("timestamp without time zone")
+        .HasDefaultValueSql("NOW()");
 
         builder.Property(p => p.Currency)
        .IsRequired();

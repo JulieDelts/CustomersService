@@ -2,7 +2,7 @@
 
 namespace CustomersService.Persistence.Interfaces
 {
-    public interface IAccountRepository: IBaseRepository<Account>
+    public interface IAccountRepository: IBaseRepository<Account>, IDeactivatable<Account>
     {}
 }
 

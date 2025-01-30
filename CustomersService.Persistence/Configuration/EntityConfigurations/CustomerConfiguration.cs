@@ -8,8 +8,7 @@ internal class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 {
     public void Configure(EntityTypeBuilder<Customer> builder)
     {
-        builder.ToTable("Customer")
-        .HasKey(p => p.Id);
+        builder.HasKey(p => p.Id);
 
         builder.Property(p => p.Id)
         .IsRequired()
@@ -36,7 +35,7 @@ internal class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 
         builder.Property(p => p.Address)
         .IsRequired()
-        .HasMaxLength(100);
+        .HasMaxLength(150);
 
         builder.Property(p => p.Phone)
         .IsRequired()

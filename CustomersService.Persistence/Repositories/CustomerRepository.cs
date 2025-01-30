@@ -7,22 +7,29 @@ namespace CustomersService.Persistence.Repositories
     {
         public async Task UpdateProfileAsync(Customer customer, Customer customerUpdate)
         {
-            throw new NotImplementedException();
+            customer.FirstName = customerUpdate.FirstName;
+            customer.LastName = customerUpdate.LastName;
+            customer.Phone = customerUpdate.Phone;
+            customer.Address = customerUpdate.Address;
+            await context.SaveChangesAsync();
         }
 
         public async Task UpdatePasswordAsync(Customer customer, string newPassword)
         {
-            throw new NotImplementedException();
+            customer.Password = newPassword;
+            await context.SaveChangesAsync();
         }
 
-        public override async Task ActivateAsync(Customer customer)
+        public async Task ActivateAsync(Customer customer)
         {
-            throw new NotImplementedException();
+            customer.IsDeactivated = false;
+            await context.SaveChangesAsync();
         }
 
-        public override async Task DeactivateAsync(Customer customer)
+        public async Task DeactivateAsync(Customer customer)
         {
-            throw new NotImplementedException();
+            customer.IsDeactivated = true;
+            await context.SaveChangesAsync();
         }
     }
 }

@@ -12,7 +12,7 @@ namespace CustomersService.Persistence.Configuration
         {
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IAccountRepository, AccountRepository>();
-            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<ICustomerUnitOfWork, CustomerUnitOfWork>();
             services.AddDbContext<CustomerServiceDbContext>(options => options.UseNpgsql(configuration.GetConnectionString("CustomerServiceDefaultConnection")));
         }
     }

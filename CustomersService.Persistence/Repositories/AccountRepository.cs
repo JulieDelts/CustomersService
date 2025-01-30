@@ -5,14 +5,16 @@ namespace CustomersService.Persistence.Repositories
 {
     public class AccountRepository(CustomerServiceDbContext context) : BaseRepository<Account>(context), IAccountRepository
     {
-        public override async Task ActivateAsync(Account account)
+        public async Task ActivateAsync(Account account)
         {
-            throw new NotImplementedException();
+            account.IsDeactivated = false;
+            await context.SaveChangesAsync();
         }
 
-        public override async Task DeactivateAsync(Account account)
+        public async Task DeactivateAsync(Account account)
         {
-            throw new NotImplementedException();
+            account.IsDeactivated = false;
+            await context.SaveChangesAsync();
         }
     }
 }

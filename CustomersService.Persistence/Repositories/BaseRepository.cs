@@ -6,25 +6,23 @@ namespace CustomersService.Persistence.Repositories
 {
     public abstract class BaseRepository<T>(CustomerServiceDbContext context) : IBaseRepository<T> where T : class
     {
-        protected readonly DbSet<T> DbSet = context.Set<T>();
+        protected readonly DbSet<T> _dbSet = context.Set<T>();
 
-        public virtual async Task CreateAsync(T entity)
+        public async Task CreateAsync(T entity)
         {
-            DbSet.Add(entity);
+            _dbSet.Add(entity);
+            await context.SaveChangesAsync();
         }
 
-        public virtual async Task<IEnumerable<T>> GetAllAsync() => await DbSet.ToListAsync();
+        public async Task<IEnumerable<T>> GetAllAsync() => await _dbSet.ToListAsync();
         
-        public virtual async Task<T?> GetByConditionAsync(Expression<Func<T, bool>> condition) =>
-            await DbSet.Where(condition).SingleOrDefaultAsync();
+        public async Task<T?> GetByConditionAsync(Expression<Func<T, bool>> condition) =>
+            await _dbSet.Where(condition).SingleOrDefaultAsync();
 
-        public virtual async Task DeleteAsync(T entity)
+        public async Task DeleteAsync(T entity)
         {
-            DbSet.Remove(entity);
+            _dbSet.Remove(entity);
+            await context.SaveChangesAsync();
         }
-
-        public abstract Task ActivateAsync(T entity);
-
-        public abstract Task DeactivateAsync(T entity);
     }
 }
