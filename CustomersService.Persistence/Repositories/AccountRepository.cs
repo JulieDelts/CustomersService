@@ -13,7 +13,7 @@ namespace CustomersService.Persistence.Repositories
 
         public async Task DeactivateAsync(Account account)
         {
-            account.IsDeactivated = false;
+            account.IsDeactivated = true;
             await context.SaveChangesAsync();
         }
     }
