@@ -44,6 +44,10 @@ internal class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(p => p.BirthDate)
         .IsRequired();
 
+        builder.Property(p => p.CustomVipDueDate)
+       .IsRequired(false)
+       .HasColumnType("timestamp without time zone");
+
         builder.Property(p => p.IsDeactivated)
         .IsRequired()
         .HasDefaultValue(false);
