@@ -9,5 +9,6 @@ namespace CustomersService.Persistence.Entities
         public DateTime DateCreated { get; set; }
         public Currency Currency { get; set; }
         public bool IsDeactivated { get; set; }
+        public Customer Customer { get; set; }
     }
 }
