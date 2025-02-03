@@ -1,10 +1,11 @@
 ﻿using System.Linq.Expressions;
+using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace CustomersService.Persistence.Repositories
 {
-    public abstract class BaseRepository<T>(CustomerServiceDbContext context) : IBaseRepository<T> where T : class
+    public abstract class BaseRepository<T>(CustomerServiceDbContext context) : IBaseRepository<T> where T : BaseEntity
     {
         protected readonly DbSet<T> _dbSet = context.Set<T>();
 
