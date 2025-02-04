@@ -10,5 +10,6 @@ namespace CustomersService.Persistence.Interfaces
         Task<IEnumerable<T>> GetAllAsync();
         Task DeleteAsync(T entity);
         Task<T?> GetByConditionAsync(Expression<Func<T, bool>> condition);
+        Task<List<T>> GetAllByConditionAsync(Expression<Func<T, bool>> condition);
     }
 }

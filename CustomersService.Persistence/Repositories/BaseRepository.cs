@@ -20,6 +20,9 @@ namespace CustomersService.Persistence.Repositories
         public async Task<T?> GetByConditionAsync(Expression<Func<T, bool>> condition) =>
             await _dbSet.Where(condition).SingleOrDefaultAsync();
 
+        public async Task<List<T>> GetAllByConditionAsync(Expression<Func<T, bool>> condition) =>
+          await _dbSet.Where(condition).ToListAsync();
+
         public async Task DeleteAsync(T entity)
         {
             _dbSet.Remove(entity);
