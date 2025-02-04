@@ -33,6 +33,10 @@ internal class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         .IsRequired()
         .HasMaxLength(15);
 
+        builder.Property(p => p.PasswordHash)
+       .IsRequired()
+       .HasMaxLength(100);
+
         builder.Property(p => p.Address)
         .IsRequired()
         .HasMaxLength(150);
