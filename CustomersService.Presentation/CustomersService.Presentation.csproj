@@ -16,7 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CustomersService.Persistence\CustomersService.Persistence.csproj" />
+    <ProjectReference Include="..\CustomersService.Application\CustomersService.Application.csproj" />
+    <ProjectReference Include="..\CustomersService.Core\CustomersService.Core.csproj" />
   </ItemGroup>
 
 </Project>
