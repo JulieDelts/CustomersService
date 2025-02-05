@@ -2,14 +2,10 @@
 
 namespace CustomersService.Persistence.Interfaces
 {
-    public interface IAccountRepository
+    public interface IAccountRepository : IBaseRepository<Account>, IDeactivatable<Account>
     {
-        Task<Guid> CreateAsync(Account account);
-        Task<List<Account>> GetAllAsync();
-        Task<Account> GetByIdAsync(Guid id);
-        Task ActivateAsync(Account account);
-        Task DeactivateAsync(Account account);
-        Task DeleteAsync(Account account);
+        Task ActivateAsync(List<Account> accounts);
+        Task DeactivateAsync(List<Account> accounts);
     }
 }
 

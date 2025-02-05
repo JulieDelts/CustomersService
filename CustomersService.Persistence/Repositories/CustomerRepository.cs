@@ -1,48 +1,55 @@
-﻿using CustomersService.Persistence.Entities;
+﻿using CustomersService.Core.Enum;
+using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace CustomersService.Persistence.Repositories
 {
-    public class CustomerRepository : ICustomerRepository
+    public class CustomerRepository(CustomerServiceDbContext context) : BaseRepository<Customer>(context), ICustomerRepository
     {
-        public async Task<Guid> CreateAsync(Customer customer)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<List<Customer>> GetAllAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<Customer> GetByIdAsync(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task UpdateProfileAsync(Customer customer, Customer customerUpdate)
         {
-            throw new NotImplementedException();
+            customer.FirstName = customerUpdate.FirstName;
+            customer.LastName = customerUpdate.LastName;
+            customer.Phone = customerUpdate.Phone;
+            customer.Address = customerUpdate.Address;
+            await context.SaveChangesAsync();
         }
 
         public async Task UpdatePasswordAsync(Customer customer, string newPassword)
         {
-            throw new NotImplementedException();
+            customer.Password = newPassword;
+            await context.SaveChangesAsync();
+        }
+        public async Task SetManualVipAsync(Customer customer, DateTime vipExpirationDate)
+        {
+            customer.Role = Role.VIP;
+            customer.CustomVipDueDate = vipExpirationDate;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task BatchUpdateRoleAsync(Dictionary<Customer, Role> customersWithRoles)
+        {
+            foreach (var customerWithRole in customersWithRoles)
+            {
+                var customer = customerWithRole.Key;
+                var newRole = customerWithRole.Value;
+                customer.Role = newRole;
+            }
+
+            await context.SaveChangesAsync();
         }
 
         public async Task ActivateAsync(Customer customer)
         {
-            throw new NotImplementedException();
+            customer.IsDeactivated = false;
+            await context.SaveChangesAsync();
         }
 
         public async Task DeactivateAsync(Customer customer)
         {
-            throw new NotImplementedException();
-        }
-
-        public async Task DeleteAsync(Customer customer)
-        {
-            throw new NotImplementedException();
+            customer.IsDeactivated = true;
+            await context.SaveChangesAsync();
         }
     }
 }

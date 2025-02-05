@@ -8,11 +8,16 @@
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="11.11.0" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CustomersService.Persistence\CustomersService.Persistence.csproj" />
+    <ProjectReference Include="..\CustomersService.Application\CustomersService.Application.csproj" />
+    <ProjectReference Include="..\CustomersService.Core\CustomersService.Core.csproj" />
   </ItemGroup>
 
 </Project>
