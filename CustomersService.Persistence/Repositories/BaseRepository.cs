@@ -15,18 +15,12 @@ namespace CustomersService.Persistence.Repositories
             await context.SaveChangesAsync();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync() => await _dbSet.ToListAsync();
+        public async Task<IEnumerable<T>> GetAllAsync(int skip, int take) => await _dbSet.Skip(skip).Take(take).ToListAsync();
         
         public async Task<T?> GetByConditionAsync(Expression<Func<T, bool>> condition) =>
             await _dbSet.Where(condition).SingleOrDefaultAsync();
 
         public async Task<List<T>> GetAllByConditionAsync(Expression<Func<T, bool>> condition) =>
           await _dbSet.Where(condition).ToListAsync();
-
-        public async Task DeleteAsync(T entity)
-        {
-            _dbSet.Remove(entity);
-            await context.SaveChangesAsync();
-        }
     }
 }

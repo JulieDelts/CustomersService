@@ -81,15 +81,5 @@ namespace CustomersService.Application.Services
 
             await accountRepository.ActivateAsync(accountDTO);
         }
-
-        public async Task DeleteAsync(Guid id)
-        {
-            var accountDTO = await accountUtils.GetByIdAsync(id);
-
-            if(accountDTO.Currency == Currency.RUB)
-                throw new EntityConflictException($"Account with currency {Currency.RUB} cannot be deleted.");
-
-            await accountRepository.DeleteAsync(accountDTO);
-        }
     }
 }

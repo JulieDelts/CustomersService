@@ -8,7 +8,6 @@ namespace CustomersService.Application.Interfaces
         Task ActivateAsync(Guid id);
         Task<Guid> CreateAsync(AccountCreationModel accountToCreate);
         Task DeactivateAsync(Guid id);
-        Task DeleteAsync(Guid id);
         Task<List<AccountInfoModel>> GetAllByCustomerIdAsync(Guid customerId);
         Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id);
     }

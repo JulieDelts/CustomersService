@@ -1,5 +1,7 @@
-﻿using CustomersService.Persistence.Entities;
+﻿using CustomersService.Core.Enum;
+using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace CustomersService.Persistence.Repositories
 {
@@ -17,6 +19,24 @@ namespace CustomersService.Persistence.Repositories
         public async Task UpdatePasswordAsync(Customer customer, string newPassword)
         {
             customer.Password = newPassword;
+            await context.SaveChangesAsync();
+        }
+        public async Task SetManualVipAsync(Customer customer, DateTime vipExpirationDate)
+        {
+            customer.Role = Role.VIP;
+            customer.CustomVipDueDate = vipExpirationDate;
+            await context.SaveChangesAsync();
+        }
+
+        public async Task BatchUpdateRoleAsync(Dictionary<Customer, Role> customersWithRoles)
+        {
+            foreach (var customerWithRole in customersWithRoles)
+            {
+                var customer = customerWithRole.Key;
+                var newRole = customerWithRole.Value;
+                customer.Role = newRole;
+            }
+
             await context.SaveChangesAsync();
         }
 

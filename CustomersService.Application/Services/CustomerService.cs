@@ -32,14 +32,7 @@ namespace CustomersService.Application.Services
 
             try
             {
-                customerUnitOfWork.Begin();
-
-                await customerRepository.CreateAsync(customerDTO);
-                accountDTO.Customer = customerDTO;
-                await accountRepository.CreateAsync(accountDTO);
-
-                customerUnitOfWork.Commit();
-
+                await customerUnitOfWork.CreateCustomerAsync(customerDTO, accountDTO);
                 return customerDTO.Id;
             }
             catch
@@ -49,9 +42,9 @@ namespace CustomersService.Application.Services
             }
         }
 
-        public async Task<List<CustomerInfoModel>> GetAllAsync()
+        public async Task<List<CustomerInfoModel>> GetAllAsync(int skip, int take)
         {
-            var customerDTOs = await customerRepository.GetAllAsync();
+            var customerDTOs = await customerRepository.GetAllAsync(skip, take);
 
             return mapper.Map<List<CustomerInfoModel>>(customerDTOs);
         }
@@ -90,6 +83,67 @@ namespace CustomersService.Application.Services
             await customerRepository.UpdatePasswordAsync(customerDTO, password);
         }
 
+        public async Task SetManualVipAsync(Guid id, DateTime vipExpirationDate)
+        {
+            var customerDTO = await customerUtils.GetByIdAsync(id);
+
+            if (customerDTO.IsDeactivated)
+                throw new EntityConflictException($"Customer with id {id} is deactivated.");
+
+            var regularAccounts = new List<Currency> { Currency.RUB, Currency.USD, Currency.EUR };
+
+            var accountsToActivate = await accountRepository.GetAllByConditionAsync(a =>
+            a.CustomerId == id
+            && !regularAccounts.Contains(a.Currency));
+
+            try
+            {
+                await customerUnitOfWork.SetManualVipAsync(customerDTO, vipExpirationDate, accountsToActivate);
+            }
+            catch
+            {
+                customerUnitOfWork.Rollback();
+                throw new TransactionFailedException("Transaction failed.");
+            }
+        }
+
+        public async Task BatchUpdateRoleAsync(List<Guid> vipCustomerIds)
+        {
+            var vipCustomers = await customerRepository.GetAllByConditionAsync(c => 
+                vipCustomerIds.Contains(c.Id) && c.Role != Role.VIP);
+
+            var customersWithDueVip = await customerRepository.GetAllByConditionAsync(c =>
+                c.Role == Role.VIP
+                && !vipCustomerIds.Contains(c.Id)
+                && (c.CustomVipDueDate == null ||
+                c.CustomVipDueDate < DateTime.Now));
+
+            var vipCustomersDictionary = vipCustomers.ToDictionary(c => c, c => Role.VIP);
+            var customersWithDueVipDictionary = customersWithDueVip.ToDictionary(c => c, c => Role.Regular);
+            var customersWithUpdatedRoles = vipCustomersDictionary.Concat(customersWithDueVipDictionary).ToDictionary();
+
+            var regularAccounts = new List<Currency> { Currency.RUB, Currency.USD, Currency.EUR };
+
+            var accountsToActivate = await accountRepository.GetAllByConditionAsync(a =>
+            vipCustomerIds.Contains(a.CustomerId)
+            && !regularAccounts.Contains(a.Currency));
+
+            var customerWithDueVipIds = customersWithDueVip.Select(c => c.Id).ToList();
+            var accountsToDeactivate = await accountRepository.GetAllByConditionAsync(a =>
+            customerWithDueVipIds.Contains(a.CustomerId)
+            && !regularAccounts.Contains(a.Currency));
+
+            try
+            {
+               await customerUnitOfWork.BatchUpdateRoleAsync(customersWithUpdatedRoles, accountsToActivate, accountsToDeactivate);
+            }
+            catch
+            {
+                customerUnitOfWork.Rollback();
+                throw new TransactionFailedException("Transaction failed.");
+            }
+        }
+
         public async Task DeactivateAsync(Guid id)
         {
             var customerDTO = await customerUtils.GetByIdAsync(id);
@@ -102,32 +156,6 @@ namespace CustomersService.Application.Services
             var customerDTO = await customerUtils.GetByIdAsync(id);
 
             await customerRepository.ActivateAsync(customerDTO);
-        }
-
-        public async Task DeleteAsync(Guid id)
-        {
-            var customerDTO = await customerUtils.GetByIdAsync(id);
-
-            var accountDTO = await accountRepository.GetByConditionAsync(a => 
-            a.CustomerId == id && a.Currency == Currency.RUB);
-
-            if (accountDTO == null)
-                throw new EntityNotFoundException($"Account with customer id {id} and currency {Currency.RUB} was not found.");
-
-            try
-            {
-                customerUnitOfWork.Begin();
-
-                await accountRepository.DeleteAsync(accountDTO);
-                await customerRepository.DeleteAsync(customerDTO);
-
-                customerUnitOfWork.Commit();
-            }
-            catch
-            {
-                customerUnitOfWork.Rollback();
-                throw new TransactionFailedException("Transaction failed.");
-            }
         }
 
         private bool CheckPassword(string passwordToCheck, string passwordHash)
