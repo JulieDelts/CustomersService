@@ -7,7 +7,7 @@ namespace CustomersService.Application.Models
     {
         public Guid Id { get; set; }
         public bool IsDeactivated { get; set; }
-        public Currency Currency { get; set; }
+        public CurrencyType Currency { get; set; }
         public Guid CustomerId { get; set; }
     }
 }

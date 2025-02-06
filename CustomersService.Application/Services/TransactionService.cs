@@ -24,19 +24,14 @@ public class TransactionService : ITransactionService
 
     public async Task<Guid> CreateSimpleTransactionAsync(CreateTransactionRequest requestModel, TransactionType transactionType) 
     {
-        Guid result;
-
+        string path;
         if (transactionType == TransactionType.Deposit)
-        {
-            result = await _httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>("/deposit", requestModel);
-        }
+            path = "/deposit";
         else if (transactionType == TransactionType.Withdrawal)
-        {
-            result = await _httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>("/withdraw", requestModel);
-        }
+            path = "/withdraw";
         else throw new EntityConflictException("Transaction type is not supported.");
 
-        return result;
+        return await _httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>(path, requestModel);
     }
 
     public async Task<IEnumerable<Guid>> CreateTransferTransactionAsync(CreateTransferTransactionRequest requestModel)

@@ -1,9 +1,11 @@
 ﻿
 using AutoMapper;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
@@ -16,6 +18,8 @@ namespace CustomersService.Application.Services
         CustomerUtils customerUtils,
         AccountUtils accountUtils) : IAccountService
     {
+        private readonly CommonHttpClient _httpClient = new("api/v1/accounts");
+
         public async Task<Guid> CreateAsync(AccountCreationModel accountToCreate)
         {
             var customerDTO = await customerUtils.GetByIdAsync(accountToCreate.CustomerId);
@@ -33,8 +37,8 @@ namespace CustomersService.Application.Services
                 throw new EntityConflictException($"Customer with id {accountToCreate.CustomerId} already has an account with currency {accountToCreate.Currency}.");
 
             if(customerDTO.Role == Role.Regular 
-                && accountToCreate.Currency != Currency.USD
-                && accountToCreate.Currency != Currency.EUR)
+                && accountToCreate.Currency != CurrencyType.USD
+                && accountToCreate.Currency != CurrencyType.EUR)
                 throw new EntityConflictException($"Customer with role {customerDTO.Role} cannot have an account with this currency.");
 
             var accountToCreateDTO = mapper.Map<Account>(accountToCreate);
@@ -52,25 +56,30 @@ namespace CustomersService.Application.Services
             return mapper.Map<List<AccountInfoModel>>(accountDTOs);
         }
 
-        //TODO
         public async Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id)
         {
             var accountDTO = await accountUtils.GetByIdAsync(id);
 
             var account = mapper.Map<AccountFullInfoModel>(accountDTO);
 
-            //Обращаемся к АПИ TransactionStore, чтобы получить баланс
-            account.Balance = 0; 
+            var accountBalanceModel = await _httpClient.SendGetRequestAsync<BalanceResponse>($"/{id}/balance");
+
+            account.Balance = accountBalanceModel.Balance; 
 
             return account;
+        }
+
+        public async Task<List<TransactionResponse>> GetTransactionsByAccountId(Guid id)
+        {
+           return await _httpClient.SendGetRequestAsync<List<TransactionResponse>>($"/{id}/transactions");
         }
 
         public async Task DeactivateAsync(Guid id)
         {
             var accountDTO = await accountUtils.GetByIdAsync(id);
 
-            if (accountDTO.Currency == Currency.RUB)
-                throw new EntityConflictException($"Account with currency {Currency.RUB} cannot be deactivated.");
+            if (accountDTO.Currency == CurrencyType.RUB)
+                throw new EntityConflictException($"Account with currency {CurrencyType.RUB} cannot be deactivated.");
 
             await accountRepository.DeactivateAsync(accountDTO);
         }

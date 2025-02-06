@@ -1,7 +1,7 @@
 ﻿
 namespace CustomersService.Core.Enum
 {
-    public enum Currency
+    public enum CurrencyType
     {
         Unknown,
         RUB, 

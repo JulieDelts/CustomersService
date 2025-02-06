@@ -1,4 +1,5 @@
-﻿using CustomersService.Application.Interfaces;
+﻿using CustomersService.Application.Intefaces;
+using CustomersService.Application.Interfaces;
 using CustomersService.Application.Mappings;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
@@ -12,6 +13,7 @@ namespace CustomersService.Application.Configuration
         {
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<AccountUtils>();
             services.AddScoped<CustomerUtils>();
             services.AddAutoMapper(typeof(CustomerApplicationMapperProfile).Assembly);

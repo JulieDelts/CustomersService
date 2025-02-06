@@ -53,7 +53,7 @@ namespace CustomersService.Application.Tests
                 Password = "TestPassword"
             };
 
-            var account = new Account() { Currency = Currency.RUB };
+            var account = new Account() { Currency = CurrencyType.RUB };
 
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Email == customer.Email)).ReturnsAsync(null as Customer);
 

@@ -44,7 +44,7 @@ namespace CustomersService.Application.Tests
         {
             // Arrange
             var customerId = Guid.NewGuid();
-            var accountModel = new AccountCreationModel { CustomerId = customerId, Currency = Currency.USD };
+            var accountModel = new AccountCreationModel { CustomerId = customerId, Currency = CurrencyType.USD };
             var customer = new Customer { Id = accountModel.CustomerId, Role = Role.Regular, IsDeactivated = false };
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
 
@@ -96,10 +96,10 @@ namespace CustomersService.Application.Tests
             // Arrange
             var customerId = Guid.NewGuid();
             var accountId = Guid.NewGuid();
-            var accountModel = new AccountCreationModel { CustomerId = customerId, Currency = Currency.USD };
+            var accountModel = new AccountCreationModel { CustomerId = customerId, Currency = CurrencyType.USD };
             var message = $"Customer with id {customerId} already has an account with currency {accountModel.Currency}.";
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(new Customer() { Id = customerId, Role = Role.Regular });
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Currency == accountModel.Currency && c.CustomerId == accountModel.CustomerId)).ReturnsAsync(new Account() { CustomerId = customerId, Currency = Currency.USD });
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Currency == accountModel.Currency && c.CustomerId == accountModel.CustomerId)).ReturnsAsync(new Account() { CustomerId = customerId, Currency = CurrencyType.USD });
             // Act
             var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateAsync(accountModel));
 
@@ -113,7 +113,7 @@ namespace CustomersService.Application.Tests
             // Arrange
             var customerId = Guid.NewGuid();
             var accountId = Guid.NewGuid();
-            var accountModel = new AccountCreationModel { CustomerId = customerId, Currency = Currency.JPY };
+            var accountModel = new AccountCreationModel { CustomerId = customerId, Currency = CurrencyType.JPY };
             var message = $"Customer with role {Role.Regular} cannot have an account with this currency.";
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(new Customer() { Id = customerId, Role = Role.Regular });
             // Act
@@ -180,7 +180,7 @@ namespace CustomersService.Application.Tests
         {
             // Arrange
             var accountId = Guid.NewGuid();
-            var account = new Account() { Id = accountId, Currency = Currency.USD};
+            var account = new Account() { Id = accountId, Currency = CurrencyType.USD};
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(a => a.Id == accountId)).ReturnsAsync(account);
 
             // Act
@@ -198,8 +198,8 @@ namespace CustomersService.Application.Tests
         {
             // Arrange
             var accountId = Guid.NewGuid();
-            var message = $"Account with currency {Currency.RUB} cannot be deactivated.";
-            var account = new Account() { Id = accountId, Currency = Currency.RUB};
+            var message = $"Account with currency {CurrencyType.RUB} cannot be deactivated.";
+            var account = new Account() { Id = accountId, Currency = CurrencyType.RUB};
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(a => a.Id == accountId)).ReturnsAsync(account);
             // Act
             var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.DeactivateAsync(accountId));

@@ -6,7 +6,7 @@ namespace CustomersService.Persistence.Entities
     {
         public Guid CustomerId { get; set; }
         public DateTime DateCreated { get; set; }
-        public Currency Currency { get; set; }
+        public CurrencyType Currency { get; set; }
         public Customer Customer { get; set; }
     }
 }

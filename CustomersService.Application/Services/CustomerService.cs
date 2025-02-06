@@ -28,7 +28,7 @@ namespace CustomersService.Application.Services
             customerDTO.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(customerToRegister.Password);
             customerDTO.Role = Role.Regular;
 
-            var accountDTO = new Account() { Currency = Currency.RUB };
+            var accountDTO = new Account() { Currency = CurrencyType.RUB };
 
             try
             {
@@ -90,7 +90,7 @@ namespace CustomersService.Application.Services
             if (customerDTO.IsDeactivated)
                 throw new EntityConflictException($"Customer with id {id} is deactivated.");
 
-            var regularAccounts = new List<Currency> { Currency.RUB, Currency.USD, Currency.EUR };
+            var regularAccounts = new List<CurrencyType> { CurrencyType.RUB, CurrencyType.USD, CurrencyType.EUR };
 
             var accountsToActivate = await accountRepository.GetAllByConditionAsync(a =>
             a.CustomerId == id
@@ -122,7 +122,7 @@ namespace CustomersService.Application.Services
             var customersWithDueVipDictionary = customersWithDueVip.ToDictionary(c => c, c => Role.Regular);
             var customersWithUpdatedRoles = vipCustomersDictionary.Concat(customersWithDueVipDictionary).ToDictionary();
 
-            var regularAccounts = new List<Currency> { Currency.RUB, Currency.USD, Currency.EUR };
+            var regularAccounts = new List<CurrencyType> { CurrencyType.RUB, CurrencyType.USD, CurrencyType.EUR };
 
             var accountsToActivate = await accountRepository.GetAllByConditionAsync(a =>
             vipCustomerIds.Contains(a.CustomerId)

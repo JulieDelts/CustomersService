@@ -11,7 +11,7 @@ namespace CustomersService.Application.Tests.TestCases
         {
             var accountModel = new AccountCreationModel()
             {
-                Currency = Currency.USD,
+                Currency = CurrencyType.USD,
                 CustomerId = Guid.NewGuid()
             };
 
@@ -24,9 +24,9 @@ namespace CustomersService.Application.Tests.TestCases
 
             var accountDTOs = new List<Account>()
             {
-                new Account { CustomerId = customerId, Currency = Currency.RUB },
-                new Account { CustomerId = customerId, Currency = Currency.USD },
-                new Account { CustomerId = customerId, Currency = Currency.JPY },
+                new Account { CustomerId = customerId, Currency = CurrencyType.RUB },
+                new Account { CustomerId = customerId, Currency = CurrencyType.USD },
+                new Account { CustomerId = customerId, Currency = CurrencyType.JPY },
                
             };
 
@@ -38,7 +38,7 @@ namespace CustomersService.Application.Tests.TestCases
             var accountDTO = new Account()
             {
                 Id = Guid.NewGuid(),
-                Currency = Currency.USD,
+                Currency = CurrencyType.USD,
                 CustomerId = Guid.NewGuid(),
                 DateCreated = DateTime.Now,
                 IsDeactivated = false
