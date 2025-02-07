@@ -1,4 +1,5 @@
 ﻿
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using CustomersService.Application.Exceptions;
@@ -7,17 +8,18 @@ namespace CustomersService.Application.Integrations
 {
     internal class CommonHttpClient
     {
-        private readonly HttpClient _httpClient;
+        private readonly HttpClient _httpClient = new();
         private JsonSerializerOptions _serializerOptions;
 
-        public CommonHttpClient(string baseUrl)
+        public CommonHttpClient(string baseUrl, HttpMessageHandler? handler = null)
         {
-            _httpClient = new HttpClient()
+            if (handler != null)
             {
-                BaseAddress = new Uri(baseUrl),
-                Timeout = new TimeSpan(0, 5, 0)
-            };
+                _httpClient = new HttpClient(handler);
+            }
 
+            _httpClient.BaseAddress = new Uri(baseUrl);
+            _httpClient.Timeout = new TimeSpan(0, 5, 0);
             _serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
         }
 
@@ -32,9 +34,11 @@ namespace CustomersService.Application.Integrations
                 var result = JsonSerializer.Deserialize<T>(content, _serializerOptions);
                 return result;
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                throw new ServiceUnavailableException("Request to the service failed.");
+                if (ex.StatusCode == HttpStatusCode.InternalServerError)
+                    throw new BadGatewayException("Invalid response from the upstream server.");
+                else throw new ServiceUnavailableException("Request to the service failed.");
             }
         }
 
@@ -51,9 +55,11 @@ namespace CustomersService.Application.Integrations
                 var result = JsonSerializer.Deserialize<K>(content, _serializerOptions);
                 return result;
             }
-            catch (HttpRequestException)
+            catch (HttpRequestException ex)
             {
-                throw new ServiceUnavailableException("Request to the service failed.");
+                if (ex.StatusCode == HttpStatusCode.InternalServerError)
+                    throw new BadGatewayException("Invalid response from the upstream server.");
+                else throw new ServiceUnavailableException("Request to the service failed.");
             }
         }
     }

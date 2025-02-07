@@ -7,6 +7,6 @@ public class CreateTransferTransactionRequest
     public Guid FromAccountId { get; set; }
     public Guid ToAccountId { get; set; }
     public decimal Amount { get; set; }
-    public CurrencyType FromCurrency { get; set; }
-    public CurrencyType ToCurrency { get; set; }
+    public Currency FromCurrency { get; set; }
+    public Currency ToCurrency { get; set; }
 }

@@ -1,3 +1,4 @@
+using CustomersService.Application.Configuration;
 using CustomersService.Persistence.Configuration;
 
 namespace CustomersService.Presentation
@@ -10,7 +11,6 @@ namespace CustomersService.Presentation
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
 
             builder.Configuration
            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -20,16 +20,17 @@ namespace CustomersService.Presentation
            .AddEnvironmentVariables()
            .Build();
 
+            builder.Services.AddSwaggerGen();
+
             var configuration = builder.Configuration;
 
             builder.Services.AddPersistenceServices(configuration);
+            builder.Services.AddApplicationServices();
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.MapOpenApi();
-            }
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             app.UseHttpsRedirection();
 

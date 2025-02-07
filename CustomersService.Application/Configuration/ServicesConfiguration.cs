@@ -1,5 +1,4 @@
-﻿using CustomersService.Application.Intefaces;
-using CustomersService.Application.Interfaces;
+﻿using CustomersService.Application.Interfaces;
 using CustomersService.Application.Mappings;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
