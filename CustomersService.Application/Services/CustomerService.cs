@@ -42,9 +42,9 @@ namespace CustomersService.Application.Services
             }
         }
 
-        public async Task<List<CustomerInfoModel>> GetAllAsync(int skip, int take)
+        public async Task<List<CustomerInfoModel>> GetAllAsync(int? pageNumber, int? pageSize)
         {
-            var customerDTOs = await customerRepository.GetAllAsync(skip, take);
+            var customerDTOs = await customerRepository.GetAllAsync(pageNumber ?? 0, pageSize ?? 10);
 
             return mapper.Map<List<CustomerInfoModel>>(customerDTOs);
         }

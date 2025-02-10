@@ -1,4 +1,5 @@
 using CustomersService.Persistence.Configuration;
+using CustomersService.Presentation.Configuration;
 
 namespace CustomersService.Presentation
 {
@@ -22,6 +23,8 @@ namespace CustomersService.Presentation
             var configuration = builder.Configuration;
 
             builder.Services.AddPersistenceServices(configuration);
+
+            builder.Services.AddPresentationServices();
 
             var app = builder.Build();
 
