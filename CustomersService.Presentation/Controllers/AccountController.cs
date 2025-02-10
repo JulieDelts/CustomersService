@@ -39,7 +39,7 @@ public class AccountController(
         return Ok(response);
     }
 
-    [HttpPatch("{id}/activate)")]
+    [HttpPatch("{id}/activate")]
     public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
     {
         await accountService.ActivateAsync(id);
