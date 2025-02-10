@@ -1,4 +1,8 @@
-﻿using CustomersService.Presentation.Models.Requests;
+﻿using AutoMapper;
+using CustomersService.Application.Models;
+using CustomersService.Application.Services;
+using CustomersService.Core.DTOs.Responses;
+using CustomersService.Presentation.Models.Requests;
 using CustomersService.Presentation.Models.Responses;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,43 +10,53 @@ namespace CustomersService.Presentation.Controllers;
 
 [Route("api/accounts")]
 [ApiController]
-public class AccountController : ControllerBase
+public class AccountController(
+        AccountService accountService,
+        IMapper mapper) 
+    : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<Guid>> CreateAsync([FromBody] AccountAddRequest request)
     {
-        var last = new Guid();
-        return Ok(last);
+        var accountToCreate = mapper.Map<AccountCreationModel>(request);
+        var accountId = await accountService.CreateAsync(accountToCreate);
+        return Ok(accountId);
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<AccountResponse>>> GetAllAsync()
+    [HttpGet("customer/{customerId}")]
+    public async Task<ActionResult<List<AccountResponse>>> GetAccountsByCustomerIdAsync([FromRoute] Guid customerId)
     {
-        return Ok();
+        var accounts = await accountService.GetAllByCustomerIdAsync(customerId);
+        var response = mapper.Map<List<AccountResponse>>(accounts);
+        return Ok(response);
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<AccountResponse>> GetByIdAsync([FromRoute] Guid id)
     {
-        var customer = new AccountResponse();
-        return Ok(customer);
+        var account = await accountService.GetFullInfoByIdAsync(id);
+        var response = mapper.Map<AccountResponse>(account);
+        return Ok(response);
     }
 
     [HttpPatch("{id}/activate)")]
     public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
     {
-        return NoContent();
+        await accountService.ActivateAsync(id);
+        return Ok();
     }
 
     [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> DeactivateAsync([FromRoute] Guid id)
     {
-        return NoContent();
+        await accountService.DeactivateAsync(id);
+        return Ok();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteAsync([FromRoute] Guid id)
+    [HttpGet("{id}/transactions")]
+    public async Task<ActionResult<List<TransactionResponse>>> GetTransactionsByAccountId([FromRoute] Guid id)
     {
-        return NoContent();
+        var transactions = await accountService.GetTransactionsByAccountId(id);
+        return Ok(transactions);
     }
 }

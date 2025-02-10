@@ -21,4 +21,8 @@
     <ProjectReference Include="..\CustomersService.Core\CustomersService.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Configurations\" />
+  </ItemGroup>
+
 </Project>
