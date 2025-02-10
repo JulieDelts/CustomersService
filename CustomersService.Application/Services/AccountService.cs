@@ -28,7 +28,7 @@ namespace CustomersService.Application.Services
             HttpMessageHandler? handler = null): 
             this(accountRepository, mapper, customerUtils, accountUtils)
         {
-            _httpClient = new("api/v1/accounts", handler);
+            _httpClient = new("http://194.147.90.249:9091/api/v1/accounts", handler);
         }
 
         public async Task<Guid> CreateAsync(AccountCreationModel accountToCreate)
@@ -80,7 +80,7 @@ namespace CustomersService.Application.Services
             return account;
         }
 
-        public async Task<List<TransactionResponse>> GetTransactionsByAccountId(Guid id)
+        public async Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id)
         {
            return await _httpClient.SendGetRequestAsync<List<TransactionResponse>>($"/{id}/transactions");
         }

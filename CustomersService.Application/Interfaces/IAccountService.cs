@@ -11,6 +11,6 @@ namespace CustomersService.Application.Interfaces
         Task DeactivateAsync(Guid id);
         Task<List<AccountInfoModel>> GetAllByCustomerIdAsync(Guid customerId);
         Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id);
-        Task<List<TransactionResponse>> GetTransactionsByAccountId(Guid id);
+        Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id);
     }
 }
