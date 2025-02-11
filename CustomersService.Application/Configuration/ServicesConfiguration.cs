@@ -15,7 +15,6 @@ namespace CustomersService.Application.Configuration
             services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<AccountUtils>();
             services.AddScoped<CustomerUtils>();
-            services.AddAutoMapper(typeof(CustomerApplicationMapperProfile).Assembly);
         }
     }
 }

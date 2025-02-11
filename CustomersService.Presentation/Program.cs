@@ -1,6 +1,6 @@
 using CustomersService.Application.Configuration;
 using CustomersService.Persistence.Configuration;
-using CustomersService.Presentation.Configuration;
+using CustomersService.Presentation.Configurations;
 
 namespace CustomersService.Presentation
 {
@@ -25,6 +25,7 @@ namespace CustomersService.Presentation
 
             var configuration = builder.Configuration;
 
+            builder.Services.ConfigureMappers();
             builder.Services.AddPersistenceServices(configuration);
             builder.Services.AddApplicationServices();
 
