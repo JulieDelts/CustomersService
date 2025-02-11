@@ -8,6 +8,7 @@ public class AccountDtoMapperProfile : Profile
     public AccountDtoMapperProfile()
     {
         CreateMap<AccountInfoModel, AccountResponse>();
+        CreateMap<AccountFullInfoModel,AccountFullInfoResponse>();
         CreateMap<AccountCreationModel, AccountInfoModel>();
     }
 }

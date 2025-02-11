@@ -32,10 +32,10 @@ public class AccountController(
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AccountResponse>> GetByIdAsync([FromRoute] Guid id)
+    public async Task<ActionResult<AccountFullInfoResponse>> GetByIdAsync([FromRoute] Guid id)
     {
         var account = await accountService.GetFullInfoByIdAsync(id);
-        var response = mapper.Map<AccountResponse>(account);
+        var response = mapper.Map<AccountFullInfoResponse>(account);
         return Ok(response);
     }
 
@@ -43,14 +43,14 @@ public class AccountController(
     public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
     {
         await accountService.ActivateAsync(id);
-        return Ok();
+        return NoContent();
     }
 
     [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> DeactivateAsync([FromRoute] Guid id)
     {
         await accountService.DeactivateAsync(id);
-        return Ok();
+        return NoContent();
     }
 
     [HttpGet("{id}/transactions")]
