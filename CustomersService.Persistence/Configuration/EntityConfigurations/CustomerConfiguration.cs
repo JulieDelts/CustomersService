@@ -30,8 +30,8 @@ internal class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         .HasMaxLength(50);
 
         builder.Property(p => p.Password)
-        .IsRequired()
-        .HasMaxLength(15);
+       .IsRequired()
+       .HasMaxLength(100);
 
         builder.Property(p => p.Address)
         .IsRequired()

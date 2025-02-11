@@ -28,6 +28,7 @@ internal class AccountConfiguration : IEntityTypeConfiguration<Account>
 
         builder.HasOne(p => p.Customer)
        .WithMany(u => u.Accounts)
-       .HasForeignKey(c => c.CustomerId);
+       .HasForeignKey(c => c.CustomerId)
+       .OnDelete(DeleteBehavior.Restrict);
     }
 }
