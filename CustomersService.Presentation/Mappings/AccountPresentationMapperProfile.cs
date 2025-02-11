@@ -3,9 +3,9 @@ using CustomersService.Application.Models;
 using CustomersService.Presentation.Models.Responses;
 
 namespace CustomersService.Presentation.Mappings;
-public class AccountDtoMapperProfile : Profile
+public class AccountPresentationMapperProfile : Profile
 {
-    public AccountDtoMapperProfile()
+    public AccountPresentationMapperProfile()
     {
         CreateMap<AccountInfoModel, AccountResponse>();
         CreateMap<AccountFullInfoModel,AccountFullInfoResponse>();
