@@ -86,6 +86,28 @@ namespace CustomersService.Application.Tests
             Assert.Equal(message, exception.Message);
         }
 
+
+        [Fact]
+        public async Task RegisterAsync_TransactionFailed_TransactionFailedExceptionThrown()
+        {
+            // Arrange
+            var message = "Transaction failed.";
+            var customer = new CustomerRegistrationModel()
+            {
+                Email = "TestLogin",
+                Password = "TestPassword"
+            };
+            var account = new Account() { Currency = Currency.RUB };
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Email == customer.Email)).ReturnsAsync(null as Customer);
+            _customerUnitOfWorkMock.Setup(t => t.CreateCustomerAsync(It.IsAny<Customer>(), It.IsAny<Account>())).ThrowsAsync(new Exception());
+
+            //Act
+            var exception = await Assert.ThrowsAsync<TransactionFailedException>(async () => await _sut.RegisterAsync(customer));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
+
         [Theory]
         [MemberData(nameof(CustomerServiceTestCases.CustomerToRegister), MemberType = typeof(CustomerServiceTestCases))]
         public void RegisterAsync_ValidModel_MappingSuccess(CustomerRegistrationModel customerModel)
@@ -287,6 +309,67 @@ namespace CustomersService.Application.Tests
                 t.ActivateAsync(It.Is<Customer>(t => t.Id == customerId)),
                 Times.Once
             );
+        }
+
+        [Fact]
+        public async Task SetManualVipAsync_SetManualVipSuccess()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+            var vipExpirationDate = DateTime.UtcNow;
+            var regularAccounts = new List<Currency> { Currency.RUB, Currency.USD, Currency.EUR };
+            var customer = new Customer() { Id = customerId };
+            var accounts = new List<Account>() { new Account() { CustomerId = customerId, Currency = Currency.JPY }};
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+            _accountRepositoryMock.Setup(t => t.GetAllByConditionAsync(a =>
+            a.CustomerId == customerId && !regularAccounts.Contains(a.Currency))).ReturnsAsync(accounts);
+
+            // Act
+            await _sut.SetManualVipAsync(customerId, vipExpirationDate);
+
+            // Assert
+            _customerUnitOfWorkMock.Verify(t =>
+                t.SetManualVipAsync(It.Is<Customer>(t => t.Id == customerId), It.IsAny<DateTime>(), It.IsAny<List<Account>>()),
+                Times.Once
+            );
+        }
+
+        [Fact]
+        public async Task SetManualVipAsync_CustomerDeactivated_EntityConflictExceptionThrown()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+            var message = $"Customer with id {customerId} is deactivated.";
+            var vipExpirationDate = DateTime.UtcNow;
+            var customer = new Customer() { Id = customerId, IsDeactivated = true };
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+
+            //Act
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.SetManualVipAsync(customerId, vipExpirationDate));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task SetManualVipAsync_TransactionFailed_TransactionFailedExceptionThrown()
+        {
+            // Arrange
+            var customerId = Guid.NewGuid();
+            var message = "Transaction failed.";
+            var vipExpirationDate = DateTime.UtcNow;
+            var regularAccounts = new List<Currency> { Currency.RUB, Currency.USD, Currency.EUR };
+            var customer = new Customer() { Id = customerId };
+            var accounts = new List<Account>() { new Account() { Id = Guid.NewGuid(), CustomerId = customerId, Currency = Currency.JPY } };
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+            _accountRepositoryMock.Setup(t => t.GetAllByConditionAsync(a => a.CustomerId == customerId && !regularAccounts.Contains(a.Currency))).ReturnsAsync(accounts);
+            _customerUnitOfWorkMock.Setup(t => t.SetManualVipAsync(It.IsAny<Customer>(), It.IsAny<DateTime>(), It.IsAny<List<Account>>())).ThrowsAsync(new Exception());
+
+            //Act
+            var exception = await Assert.ThrowsAsync<TransactionFailedException>(async () => await _sut.SetManualVipAsync(customerId, vipExpirationDate));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
         }
     }
 }

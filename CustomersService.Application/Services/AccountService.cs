@@ -1,9 +1,11 @@
 ﻿
 using AutoMapper;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
@@ -16,6 +18,19 @@ namespace CustomersService.Application.Services
         CustomerUtils customerUtils,
         AccountUtils accountUtils) : IAccountService
     {
+        private readonly CommonHttpClient _httpClient;
+
+        public AccountService(
+            IAccountRepository accountRepository,
+            IMapper mapper,
+            CustomerUtils customerUtils,
+            AccountUtils accountUtils, 
+            HttpMessageHandler? handler = null): 
+            this(accountRepository, mapper, customerUtils, accountUtils)
+        {
+            _httpClient = new("http://194.147.90.249:9091/api/v1/accounts", handler);
+        }
+
         public async Task<Guid> CreateAsync(AccountCreationModel accountToCreate)
         {
             var customerDTO = await customerUtils.GetByIdAsync(accountToCreate.CustomerId);
@@ -52,17 +67,22 @@ namespace CustomersService.Application.Services
             return mapper.Map<List<AccountInfoModel>>(accountDTOs);
         }
 
-        //TODO
         public async Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id)
         {
             var accountDTO = await accountUtils.GetByIdAsync(id);
 
             var account = mapper.Map<AccountFullInfoModel>(accountDTO);
 
-            //Обращаемся к АПИ TransactionStore, чтобы получить баланс
-            account.Balance = 0; 
+            var accountBalanceModel = await _httpClient.SendGetRequestAsync<BalanceResponse>($"/{id}/balance");
+
+            account.Balance = accountBalanceModel.Balance; 
 
             return account;
+        }
+
+        public async Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id)
+        {
+           return await _httpClient.SendGetRequestAsync<List<TransactionResponse>>($"/{id}/transactions");
         }
 
         public async Task DeactivateAsync(Guid id)

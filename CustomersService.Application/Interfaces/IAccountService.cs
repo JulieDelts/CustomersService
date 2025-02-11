@@ -1,5 +1,6 @@
 ﻿
 using CustomersService.Application.Models;
+using CustomersService.Core.DTOs.Responses;
 
 namespace CustomersService.Application.Interfaces
 {
@@ -10,5 +11,6 @@ namespace CustomersService.Application.Interfaces
         Task DeactivateAsync(Guid id);
         Task<List<AccountInfoModel>> GetAllByCustomerIdAsync(Guid customerId);
         Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id);
+        Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id);
     }
 }
