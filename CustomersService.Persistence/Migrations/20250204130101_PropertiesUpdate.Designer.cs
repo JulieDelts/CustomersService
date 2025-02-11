@@ -3,6 +3,7 @@ using System;
 using CustomersService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CustomersService.Persistence.Migrations
 {
     [DbContext(typeof(CustomerServiceDbContext))]
-    partial class CustomerServiceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250204130101_PropertiesUpdate")]
+    partial class PropertiesUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,6 +92,11 @@ namespace CustomersService.Persistence.Migrations
                         .HasColumnType("character varying(20)");
 
                     b.Property<string>("Password")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");

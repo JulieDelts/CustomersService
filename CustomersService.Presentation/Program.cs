@@ -29,6 +29,8 @@ namespace CustomersService.Presentation
             builder.Services.AddPersistenceServices(configuration);
             builder.Services.AddApplicationServices();
 
+            builder.Services.AddPresentationServices();
+
             var app = builder.Build();
 
             app.UseSwagger();

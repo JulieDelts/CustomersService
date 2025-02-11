@@ -7,7 +7,7 @@ namespace CustomersService.Application.Interfaces
     {
         Task ActivateAsync(Guid id);
         Task DeactivateAsync(Guid id);
-        Task<List<CustomerInfoModel>> GetAllAsync(int skip, int take);
+        Task<List<CustomerInfoModel>> GetAllAsync(int? pageNumber, int? pageSize);
         Task<CustomerFullInfoModel> GetFullInfoByIdAsync(Guid id);
         Task<Guid> RegisterAsync(CustomerRegistrationModel customerToRegister);
         Task SetManualVipAsync(Guid id, DateTime vipExpirationDate);

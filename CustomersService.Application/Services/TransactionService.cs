@@ -21,7 +21,7 @@ public class TransactionService(
         HttpMessageHandler? handler = null):
         this (customerUtils, accountUtils)
     {
-        _httpClient = new CommonHttpClient("/api/v1/transactions", handler);
+        _httpClient = new CommonHttpClient("http://194.147.90.249:9091/api/v1/transactions", handler);
     }
 
     public async Task<TransactionResponse> GetByIdAsync(Guid id)

@@ -9,6 +9,6 @@ namespace CustomersService.Persistence.Interfaces
         Task CreateAsync(T entity);
         Task<T?> GetByConditionAsync(Expression<Func<T, bool>> condition);
         Task<List<T>> GetAllByConditionAsync(Expression<Func<T, bool>> condition);
-        Task<IEnumerable<T>> GetAllAsync(int skip, int take);
+        Task<IEnumerable<T>> GetAllAsync(int pageNumber, int pageSize);
     }
 }
