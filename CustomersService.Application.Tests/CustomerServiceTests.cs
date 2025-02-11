@@ -127,15 +127,17 @@ namespace CustomersService.Application.Tests
         [Fact]
         public async Task GetAllAsync_GetSuccess()
         {
-            // Act
+            // Arrange
             var customerId = Guid.NewGuid();
-            var skip = 0;
-            var take = 5;
-            var result = await _sut.GetAllAsync(skip, take);
+            var pageNumber = 0;
+            var pageSize = 5;
+
+            // Act
+            var result = await _sut.GetAllAsync(pageNumber, pageSize);
 
             // Assert
             _customerRepositoryMock.Verify(t =>
-                t.GetAllAsync(skip, take),
+                t.GetAllAsync(pageNumber, pageSize),
                 Times.Once
             );
         }

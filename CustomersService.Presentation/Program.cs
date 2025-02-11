@@ -1,5 +1,6 @@
 using CustomersService.Application.Configuration;
 using CustomersService.Persistence.Configuration;
+using CustomersService.Presentation.Configuration;
 
 namespace CustomersService.Presentation
 {
@@ -26,6 +27,8 @@ namespace CustomersService.Presentation
 
             builder.Services.AddPersistenceServices(configuration);
             builder.Services.AddApplicationServices();
+
+            builder.Services.AddPresentationServices();
 
             var app = builder.Build();
 
