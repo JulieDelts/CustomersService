@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
+using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
-using CustomersService.Application.Services;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Presentation.Models.Requests;
 using CustomersService.Presentation.Models.Responses;
@@ -11,7 +11,7 @@ namespace CustomersService.Presentation.Controllers;
 [Route("api/accounts")]
 [ApiController]
 public class AccountController(
-        AccountService accountService,
+        IAccountService accountService,
         IMapper mapper) 
     : ControllerBase
 {
