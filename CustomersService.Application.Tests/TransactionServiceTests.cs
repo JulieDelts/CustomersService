@@ -131,12 +131,11 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task CreateSimpleTransactionAsync_CreateSuccess()
+        public async Task CreateDepositTransactionAsync_CreateSuccess()
         {
             //arrange
             var accountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
-            var transactionType = TransactionType.Deposit;
             var request = new CreateTransactionRequest() { AccountId = accountId };
             var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
             var customer = new Customer();
@@ -159,74 +158,55 @@ namespace CustomersService.Application.Tests
                 });
 
             //act 
-            var result = await _sut.CreateSimpleTransactionAsync(request, transactionType);
+            var result = await _sut.CreateDepositTransactionAsync(request);
 
             // Assert
             Assert.Equal(transactionId, result);
         }
 
         [Fact]
-        public async Task CreateSimpleTransactionAsync_WrongTransactionType_EntityConflictExceptionThrown()
-        {
-
-            //Arrange
-            var transactionType = TransactionType.Transfer;
-            var message = "Transaction type is not supported.";
-            var request = new CreateTransactionRequest();
-
-            //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
-
-            //Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
-        public async Task CreateSimpleTransactionAsync_AccountDeactivated_EntityConflictExceptionThrown()
+        public async Task CreateDepositTransactionAsync_AccountDeactivated_EntityConflictExceptionThrown()
         {
 
             //Arrange
             var accountId = Guid.NewGuid();
-            var transactionType = TransactionType.Withdrawal;
             var message = $"Account with id {accountId} is deactivated.";
             var account = new Account() { Id = accountId, IsDeactivated = true };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             var request = new CreateTransactionRequest() { AccountId = accountId };
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateDepositTransactionAsync(request));
 
             //Assert
             Assert.Equal(message, exception.Message);
         }
 
         [Fact]
-        public async Task CreateSimpleTransactionAsync_WrongCurrency_EntityConflictExceptionThrown()
+        public async Task CreateDepositTransactionAsync_WrongCurrency_EntityConflictExceptionThrown()
         {
 
             //Arrange
             var accountId = Guid.NewGuid();
-            var transactionType = TransactionType.Withdrawal;
             var message = $"Deposit and withdraw transactions are only allowed for accounts with currencies {Currency.RUB}, {Currency.USD}.";
             var account = new Account() { Id = accountId, Currency = Currency.JPY };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             var request = new CreateTransactionRequest() { AccountId = accountId };
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateDepositTransactionAsync(request));
 
             //Assert
             Assert.Equal(message, exception.Message);
         }
 
         [Fact]
-        public async Task CreateSimpleTransactionAsync_CustomerDeactivated_EntityConflictExceptionThrown()
+        public async Task CreateDepositTransactionAsync_CustomerDeactivated_EntityConflictExceptionThrown()
         {
 
             //Arrange
             var accountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
-            var transactionType = TransactionType.Withdrawal;
             var message = $"Customer with id {customerId} is deactivated.";
             var account = new Account() { Id = accountId, Currency = Currency.USD, CustomerId = customerId };
             var customer = new Customer() { Id = customerId, IsDeactivated = true };
@@ -235,20 +215,19 @@ namespace CustomersService.Application.Tests
             var request = new CreateTransactionRequest() { AccountId = accountId };
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateDepositTransactionAsync(request));
 
             //Assert
             Assert.Equal(message, exception.Message);
         }
 
         [Fact]
-        public async Task CreateSimpleTransactionAsync_InternalServerError_BadGatewayExceptionThrown()
+        public async Task CreateDepositTransactionAsync_InternalServerError_BadGatewayExceptionThrown()
         {
             //arrange
             var accountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = "Invalid response from the upstream server.";
-            var transactionType = TransactionType.Deposit;
             var request = new CreateTransactionRequest() { AccountId = accountId };
             var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
             var customer = new Customer();
@@ -270,20 +249,19 @@ namespace CustomersService.Application.Tests
                 });
 
             //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.CreateDepositTransactionAsync(request));
 
             // Assert
             Assert.Equal(message, exception.Message);
         }
 
         [Fact]
-        public async Task CreateSimpleTransactionAsync_RequestError_ServiceUnavailableExceptionThrown()
+        public async Task CreateDepositTransactionAsync_RequestError_ServiceUnavailableExceptionThrown()
         {
             //arrange
             var accountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = "Request to the service failed.";
-            var transactionType = TransactionType.Deposit;
             var request = new CreateTransactionRequest() { AccountId = accountId };
             var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
             var customer = new Customer();
@@ -305,7 +283,166 @@ namespace CustomersService.Application.Tests
                 });
 
             //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.CreateDepositTransactionAsync(request));
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateWithdrawTransactionAsync_CreateSuccess()
+        {
+            //arrange
+            var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var request = new CreateTransactionRequest() { AccountId = accountId };
+            var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
+            var customer = new Customer();
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+
+            var transactionId = Guid.NewGuid();
+            var response = JsonSerializer.Serialize(transactionId);
+
+            var mockProtected = _messageHandlerMock.Protected();
+            var setupApiRequest = mockProtected
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent(response)
+                });
+
+            //act 
+            var result = await _sut.CreateWithdrawTransactionAsync(request);
+
+            // Assert
+            Assert.Equal(transactionId, result);
+        }
+
+        [Fact]
+        public async Task CreateWithdrawTransactionAsync_AccountDeactivated_EntityConflictExceptionThrown()
+        {
+
+            //Arrange
+            var accountId = Guid.NewGuid();
+            var message = $"Account with id {accountId} is deactivated.";
+            var account = new Account() { Id = accountId, IsDeactivated = true };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            var request = new CreateTransactionRequest() { AccountId = accountId };
+
+            //Act
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateWithdrawTransactionAsync(request));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateWithdrawTransactionAsync_WrongCurrency_EntityConflictExceptionThrown()
+        {
+
+            //Arrange
+            var accountId = Guid.NewGuid();
+            var message = $"Deposit and withdraw transactions are only allowed for accounts with currencies {Currency.RUB}, {Currency.USD}.";
+            var account = new Account() { Id = accountId, Currency = Currency.JPY };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            var request = new CreateTransactionRequest() { AccountId = accountId };
+
+            //Act
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateWithdrawTransactionAsync(request));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateWithrawTransactionAsync_CustomerDeactivated_EntityConflictExceptionThrown()
+        {
+
+            //Arrange
+            var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var message = $"Customer with id {customerId} is deactivated.";
+            var account = new Account() { Id = accountId, Currency = Currency.USD, CustomerId = customerId };
+            var customer = new Customer() { Id = customerId, IsDeactivated = true };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+            var request = new CreateTransactionRequest() { AccountId = accountId };
+
+            //Act
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateWithdrawTransactionAsync(request));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateWithdrawTransactionAsync_InternalServerError_BadGatewayExceptionThrown()
+        {
+            //arrange
+            var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var message = "Invalid response from the upstream server.";
+            var request = new CreateTransactionRequest() { AccountId = accountId };
+            var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
+            var customer = new Customer();
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+
+            var transactionId = Guid.NewGuid();
+            var response = JsonSerializer.Serialize(transactionId);
+
+            var mockProtected = _messageHandlerMock.Protected();
+            var setupApiRequest = mockProtected
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage()
+                {
+                    StatusCode = HttpStatusCode.InternalServerError
+                });
+
+            //act 
+            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.CreateWithdrawTransactionAsync(request));
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateWithdrawTransactionAsync_RequestError_ServiceUnavailableExceptionThrown()
+        {
+            //arrange
+            var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var message = "Request to the service failed.";
+            var request = new CreateTransactionRequest() { AccountId = accountId };
+            var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
+            var customer = new Customer();
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+
+            var transactionId = Guid.NewGuid();
+            var response = JsonSerializer.Serialize(transactionId);
+
+            var mockProtected = _messageHandlerMock.Protected();
+            var setupApiRequest = mockProtected
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage()
+                {
+                    StatusCode = HttpStatusCode.NotFound
+                });
+
+            //act 
+            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.CreateWithdrawTransactionAsync(request));
 
             // Assert
             Assert.Equal(message, exception.Message);
@@ -349,23 +486,6 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task CreateTransferTransactionAsync_FromAccountDeactivated_EntityConflictExceptionThrown()
-        {
-            //arrange
-            var fromAccountId = Guid.NewGuid();
-            var message = $"Account with id {fromAccountId} is deactivated.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, FromCurrency = Currency.EUR };
-            var fromAccount = new Account() { Id = fromAccountId, Currency = request.FromCurrency };
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
-
-            //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request));
-
-            //Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
         public async Task CreateTransferTransactionAsync_ToAccountDeactivated_EntityConflictExceptionThrown()
         {
             //arrange
@@ -406,13 +526,13 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task CreateTransferTransactionAsync_TransferFromDeactivatedVipAccountNotToRubAccount_EntityConflictExceptionThrown()
+        public async Task CreateTransferTransactionAsync_TransferFromDeactivatedAccountNotToRubAccount_EntityConflictExceptionThrown()
         {
             //arrange
             var fromAccountId = Guid.NewGuid();
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
-            var message = $"Transfer is allowed only to the account with currency {Currency.RUB}.";
+            var message = $"Transfer from deactivated accounts is allowed only to the account with currency {Currency.RUB}.";
             var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.JPY, ToCurrency = Currency.EUR };
             var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency, IsDeactivated = true };
             var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };

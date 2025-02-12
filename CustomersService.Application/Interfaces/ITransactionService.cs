@@ -6,8 +6,9 @@ namespace CustomersService.Application.Interfaces
 {
     public interface ITransactionService
     {
-        Task<Guid> CreateSimpleTransactionAsync(CreateTransactionRequest requestModel, TransactionType transactionType);
+        Task<Guid> CreateDepositTransactionAsync(CreateTransactionRequest requestModel);
         Task<List<Guid>> CreateTransferTransactionAsync(CreateTransferTransactionRequest requestModel);
+        Task<Guid> CreateWithdrawTransactionAsync(CreateTransactionRequest requestModel);
         Task<TransactionResponse> GetByIdAsync(Guid id);
     }
 }
