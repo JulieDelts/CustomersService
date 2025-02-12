@@ -59,7 +59,7 @@ public class CustomerService(
     {
         logger.LogInformation("Retrieving all customers with pageNumber {PageNumber} and pageSize {PageSize}", pageNumber, pageSize);
 
-        var customerDTOs = await customerRepository.GetAllAsync(pageNumber ?? 0, pageSize ?? 10);
+        var customerDTOs = await customerRepository.GetAllAsync(pageNumber ?? 1, pageSize ?? 10);
         logger.LogTrace("Retrieved customer models: {@CustomerDTOs}", customerDTOs);
 
         var customers = mapper.Map<List<CustomerInfoModel>>(customerDTOs);
