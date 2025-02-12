@@ -74,7 +74,7 @@ public class CustomerController(ICustomerService customerService, IMapper mapper
         return NoContent();
     }
 
-    [HttpPatch("{id}/activate)")]
+    [HttpPatch("{id}/activate")]
     public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
     {
         await customerService.ActivateAsync(id);
@@ -82,7 +82,7 @@ public class CustomerController(ICustomerService customerService, IMapper mapper
         return NoContent();
     }
 
-    [HttpPatch("{id}/deactivate)")]
+    [HttpPatch("{id}/deactivate")]
     public async Task<IActionResult> DeactivateAsync([FromRoute] Guid id)
     {
         await customerService.DeactivateAsync(id);

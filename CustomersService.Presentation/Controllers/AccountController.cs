@@ -56,7 +56,7 @@ public class AccountController(
     [HttpGet("{id}/transactions")]
     public async Task<ActionResult<List<TransactionResponse>>> GetTransactionsByAccountId([FromRoute] Guid id)
     {
-        var transactions = await accountService.GetTransactionsByAccountId(id);
+        var transactions = await accountService.GetTransactionsByAccountIdAsync(id);
         return Ok(transactions);
     }
 }
