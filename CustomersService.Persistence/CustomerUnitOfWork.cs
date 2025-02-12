@@ -1,5 +1,4 @@
 ﻿
-using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 
@@ -18,12 +17,10 @@ namespace CustomersService.Persistence
             Commit();
         }
 
-        public async Task BatchUpdateRoleAsync(Dictionary<Customer, Role> customers, List<Account> accountsToActivate, List<Account> accountsToDeactivate)
+        public async Task BatchUpdateRoleAsync(List<Guid> customerIds)
         {
             Begin();
-            await customerRepository.BatchUpdateRoleAsync(customers);
-            await accountRepository.ActivateAsync(accountsToActivate);
-            await accountRepository.DeactivateAsync(accountsToDeactivate);
+            await customerRepository.BatchUpdateRoleAsync(customerIds);
             Commit();
         }
 

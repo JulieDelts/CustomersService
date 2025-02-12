@@ -39,19 +39,5 @@ namespace CustomersService.Persistence.Repositories
             await context.SaveChangesAsync();
             logger.LogDebug("Successfully deactivated account {AccountId}", account.Id);
         }
-
-        public async Task DeactivateAsync(List<Account> accounts)
-        {
-            logger.LogDebug("Deactivating multiple accounts");
-            logger.LogTrace("Accounts to deactivate: {@Accounts}", accounts);
-
-            foreach (var account in accounts)
-            {
-                account.IsDeactivated = true;
-            }
-
-            await context.SaveChangesAsync();
-            logger.LogDebug("Successfully deactivated multiple accounts");
-        }
     }
 }
