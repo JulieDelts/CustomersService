@@ -13,6 +13,9 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
+# Ignore log files
+TransactionStore.Presentation/CustomersServiceLog-*.txt
+
 # Mono auto generated files
 mono_crash.*
 
