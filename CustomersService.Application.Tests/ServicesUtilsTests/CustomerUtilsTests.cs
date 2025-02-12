@@ -18,6 +18,7 @@ namespace CustomersService.Application.Tests.ServicesUtilsTests
         public CustomerUtilsTests()
         {
             _customerRepositoryMock = new();
+            _loggerMock = new();
             _sut = new(_customerRepositoryMock.Object, _loggerMock.Object);
         }
 
