@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using AutoMapper;
+using Castle.Core.Logging;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Core.DTOs.Responses;
@@ -11,6 +12,7 @@ using CustomersService.Presentation.Models.Responses;
 using CustomersService.Presentation.Tests.TestCases;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace CustomersService.Presentation.Tests;
@@ -20,17 +22,19 @@ public class AccountControllerTests
     private readonly Mock<IAccountService> _accountServiceMock;
     private readonly Mapper _mapper;
     private readonly AccountController _sut;
+    private readonly Mock<ILogger<AccountController>> _loggerMock;
 
     public AccountControllerTests()
     {
         _accountServiceMock = new();
+        _loggerMock = new();
         var config = new MapperConfiguration(
         cfg =>
         {
             cfg.AddProfile(new AccountPresentationMapperProfile());
         });
         _mapper = new Mapper(config);
-        _sut = new(_accountServiceMock.Object, _mapper);
+        _sut = new AccountController(_accountServiceMock.Object, _mapper, _loggerMock.Object);
     }
 
     [Fact]

@@ -13,17 +13,17 @@ namespace CustomersService.Presentation.Controllers;
 public class AccountController(
         IAccountService accountService,
         IMapper mapper,
-        ILogger logger) 
+        ILogger<AccountController> logger) 
     : ControllerBase
 {
     [HttpPost]
     public async Task<ActionResult<Guid>> CreateAsync([FromBody] AccountAddRequest request)
     {
         logger.LogInformation("Received request to create account for customer {CustomerId}", request.CustomerId);
-        logger.LogDebug("Request data: {@Request}", request);
+        logger.LogTrace("Request data: {@Request}", request);
 
         var accountToCreate = mapper.Map<AccountCreationModel>(request);
-        logger.LogDebug("Mapped AccountCreationModel: {@AccountToCreate}", accountToCreate);
+        logger.LogTrace("Mapped AccountCreationModel: {@AccountToCreate}", accountToCreate);
 
         var accountId = await accountService.CreateAsync(accountToCreate);
         logger.LogInformation("Account created successfully with ID {AccountId}", accountId);
@@ -35,12 +35,13 @@ public class AccountController(
     public async Task<ActionResult<List<AccountResponse>>> GetAccountsByCustomerIdAsync([FromRoute] Guid customerId)
     {
         logger.LogInformation("Received request to get accounts for customer {CustomerId}", customerId);
+        logger.LogTrace("Calling accountService.GetAllByCustomerIdAsync with CustomerId: {CustomerId}", customerId);
 
         var accounts = await accountService.GetAllByCustomerIdAsync(customerId);
-        logger.LogDebug("Retrieved accounts: {@Accounts}", accounts);
+        logger.LogTrace("Retrieved accounts: {@Accounts}", accounts);
 
         var response = mapper.Map<List<AccountResponse>>(accounts);
-        logger.LogDebug("Mapped AccountResponse: {@Response}", response);
+        logger.LogTrace("Mapped AccountResponse: {@Response}", response);
 
         logger.LogInformation("Successfully retrieved {Count} accounts for customer {CustomerId}", response.Count, customerId);
         return Ok(response);
@@ -50,12 +51,13 @@ public class AccountController(
     public async Task<ActionResult<AccountFullInfoResponse>> GetByIdAsync([FromRoute] Guid id)
     {
         logger.LogInformation("Received request to get account details for account {AccountId}", id);
+        logger.LogTrace("Calling accountService.GetFullInfoByIdAsync with AccountId: {AccountId}", id);
 
         var account = await accountService.GetFullInfoByIdAsync(id);
-        logger.LogDebug("Retrieved account: {@Account}", account);
+        logger.LogTrace("Retrieved account: {@Account}", account);
 
         var response = mapper.Map<AccountFullInfoResponse>(account);
-        logger.LogDebug("Mapped AccountFullInfoResponse: {@Response}", response);
+        logger.LogTrace("Mapped AccountFullInfoResponse: {@Response}", response);
 
         logger.LogInformation("Successfully retrieved account details for account {AccountId}", id);
         return Ok(response);
@@ -65,10 +67,11 @@ public class AccountController(
     public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
     {
         logger.LogInformation("Received request to activate account {AccountId}", id);
+        logger.LogTrace("Calling accountService.ActivateAsync with AccountId: {AccountId}", id);
 
         await accountService.ActivateAsync(id);
-
         logger.LogInformation("Successfully activated account {AccountId}", id);
+
         return NoContent();
     }
 
@@ -76,10 +79,11 @@ public class AccountController(
     public async Task<IActionResult> DeactivateAsync([FromRoute] Guid id)
     {
         logger.LogInformation("Received request to deactivate account {AccountId}", id);
+        logger.LogTrace("Calling accountService.DeactivateAsync with AccountId: {AccountId}", id);
 
         await accountService.DeactivateAsync(id);
-
         logger.LogInformation("Successfully deactivated account {AccountId}", id);
+
         return NoContent();
     }
 
@@ -87,9 +91,10 @@ public class AccountController(
     public async Task<ActionResult<List<TransactionResponse>>> GetTransactionsByAccountId([FromRoute] Guid id)
     {
         logger.LogInformation("Received request to get transactions for account {AccountId}", id);
+        logger.LogTrace("Calling accountService.GetTransactionsByAccountIdAsync with AccountId: {AccountId}", id);
 
         var transactions = await accountService.GetTransactionsByAccountIdAsync(id);
-        logger.LogDebug("Retrieved transactions: {@Transactions}", transactions);
+        logger.LogTrace("Retrieved transactions: {@Transactions}", transactions);
 
         logger.LogInformation("Successfully retrieved {Count} transactions for account {AccountId}", transactions.Count, id);
         return Ok(transactions);
