@@ -2,6 +2,7 @@
 using System.Net;
 using System.Text.Json;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
@@ -26,7 +27,9 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<TransactionService>> _transactionServiceLoggerMock;
-        
+        private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
+
+
         public TransactionServiceTests()
         {
             _messageHandlerMock = new();
@@ -35,10 +38,12 @@ namespace CustomersService.Application.Tests
             _customerUtilsLoggerMock = new Mock<ILogger<CustomerUtils>>();
             _accountUtilsLoggerMock = new Mock<ILogger<AccountUtils>>();
             _transactionServiceLoggerMock = new Mock<ILogger<TransactionService>>();
+            _commonHttpClientLoggerMock = new();
             _sut = new TransactionService(
                 new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _transactionServiceLoggerMock.Object,
+                _commonHttpClientLoggerMock.Object,
                 _messageHandlerMock.Object);
         }
 

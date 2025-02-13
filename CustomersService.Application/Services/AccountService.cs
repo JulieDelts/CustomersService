@@ -28,24 +28,23 @@ public class AccountService(
         IMapper mapper,
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
-        ILogger<AccountService> logger, 
+        ILogger<AccountService> logger,
+        ILogger<CommonHttpClient> commonHttpClientLogger,
         HttpMessageHandler? handler = null): 
         this(accountRepository, mapper, customerUtils, accountUtils, logger)
     {
-        _httpClient = new("http://194.147.90.249:9091/api/v1/accounts", handler);
+        _httpClient = new("http://194.147.90.249:9091/api/v1/accounts", commonHttpClientLogger, handler);
     }
 
     public async Task<Guid> CreateAsync(AccountCreationModel accountToCreate)
     {
         logger.LogInformation("Creating account for customer {CustomerId}", accountToCreate.CustomerId);
-        logger.LogDebug("Account creation data: {@AccountToCreate}", accountToCreate);
 
         var customerDTO = await customerUtils.GetByIdAsync(accountToCreate.CustomerId);
-        logger.LogTrace("Retrieved customer data: {@CustomerDTO}", customerDTO);
 
         if (customerDTO.Role == Role.Admin || customerDTO.Role == Role.Unknown)
         {
-            logger.LogCritical("Customer with id {CustomerId} has an invalid role {Role}", accountToCreate.CustomerId, customerDTO.Role);
+            logger.LogError("Customer with id {CustomerId} has an invalid role {Role}", accountToCreate.CustomerId, customerDTO.Role);
             throw new EntityConflictException($"Role of customer with id {accountToCreate.CustomerId} is not correct.");
         }
 
@@ -57,7 +56,6 @@ public class AccountService(
 
         var accountDTO = await accountRepository.GetByConditionAsync(a =>
         a.Currency == accountToCreate.Currency && a.CustomerId == accountToCreate.CustomerId);
-        logger.LogTrace("Checked for existing account with same currency: {@AccountDTO}", accountDTO);
 
         if (accountDTO != null)
         {
@@ -75,7 +73,6 @@ public class AccountService(
 
         var accountToCreateDTO = mapper.Map<Account>(accountToCreate);
         accountToCreateDTO.Customer = customerDTO;
-        logger.LogTrace("Mapped AccountCreationModel to Account: {@AccountToCreateDTO}", accountToCreateDTO);
 
         await accountRepository.CreateAsync(accountToCreateDTO);
         logger.LogInformation("Account created successfully with ID {AccountId}", accountToCreateDTO.Id);
@@ -88,10 +85,7 @@ public class AccountService(
         logger.LogInformation("Retrieving all accounts for customer {CustomerId}", customerId);
 
         var accountDTOs = await accountRepository.GetAllByConditionAsync(a => a.CustomerId == customerId);
-        logger.LogTrace("Retrieved accounts: {@AccountDTOs}", accountDTOs);
-
         var accounts = mapper.Map<List<AccountInfoModel>>(accountDTOs);
-        logger.LogTrace("Mapped AccountDTOs to AccountInfoModels: {@Accounts}", accounts);
 
         logger.LogInformation("Successfully retrieved {Count} accounts for customer {CustomerId}", accounts.Count, customerId);
         return accounts;
@@ -102,14 +96,8 @@ public class AccountService(
         logger.LogInformation("Retrieving full account info for account {AccountId}", id);
 
         var accountDTO = await accountUtils.GetByIdAsync(id);
-        logger.LogTrace("Retrieved account data: {@AccountDTO}", accountDTO);
-
         var account = mapper.Map<AccountFullInfoModel>(accountDTO);
-        logger.LogTrace("Mapped AccountDTO to AccountFullInfoModel: {@Account}", account);
-
         var accountBalanceModel = await _httpClient.SendGetRequestAsync<BalanceResponse>($"/{id}/balance");
-        logger.LogTrace("Retrieved account balance: {@AccountBalanceModel}", accountBalanceModel);
-
         account.Balance = accountBalanceModel.Balance;
         logger.LogInformation("Successfully retrieved full account info for account {AccountId}", id);
 
@@ -121,7 +109,6 @@ public class AccountService(
         logger.LogInformation("Retrieving transactions for account {AccountId}", id);
 
         var transactions = await _httpClient.SendGetRequestAsync<List<TransactionResponse>>($"/{id}/transactions");
-        logger.LogTrace("Retrieved transactions: {@Transactions}", transactions);
 
         logger.LogInformation("Successfully retrieved {Count} transactions for account {AccountId}", transactions.Count, id);
         return transactions;
@@ -132,8 +119,6 @@ public class AccountService(
         logger.LogInformation("Deactivating account {AccountId}", id);
 
         var accountDTO = await accountUtils.GetByIdAsync(id);
-        logger.LogTrace("Retrieved account data: {@AccountDTO}", accountDTO);
-
         if (accountDTO.Currency == Currency.RUB)
         {
             logger.LogWarning("Account with currency {Currency} cannot be deactivated", Currency.RUB);
@@ -149,8 +134,6 @@ public class AccountService(
         logger.LogInformation("Activating account {AccountId}", id);
 
         var accountDTO = await accountUtils.GetByIdAsync(id);
-        logger.LogTrace("Retrieved account data: {@AccountDTO}", accountDTO);
-
         await accountRepository.ActivateAsync(accountDTO);
         logger.LogInformation("Successfully activated account {AccountId}", id);
     }
