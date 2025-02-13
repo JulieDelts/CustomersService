@@ -39,6 +39,8 @@ namespace CustomersService.Presentation
 
             app.UseAuthorization();
 
+            app.UseMiddleware<ExceptionMiddleware>();
+
             app.MapControllers();
 
             app.Run();
