@@ -5,6 +5,7 @@ using CustomersService.Application.Exceptions;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core;
 using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
@@ -12,6 +13,7 @@ using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace CustomersService.Application.Tests
@@ -25,6 +27,7 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<TransactionService>> _transactionServiceLoggerMock;
+        private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _transactionStoreAPIConnectionStringsMock;
         
         public TransactionServiceTests()
         {
@@ -34,10 +37,14 @@ namespace CustomersService.Application.Tests
             _customerUtilsLoggerMock = new Mock<ILogger<CustomerUtils>>();
             _accountUtilsLoggerMock = new Mock<ILogger<AccountUtils>>();
             _transactionServiceLoggerMock = new Mock<ILogger<TransactionService>>();
+            var settings = new TransactionStoreAPIConnectionStrings() { TransactionStoreTransactions = "http://194.147.90.249:9091/api/v1/transactions" };
+            _transactionStoreAPIConnectionStringsMock = new();
+            _transactionStoreAPIConnectionStringsMock.Setup(t => t.Value).Returns(settings);
+
             _sut = new TransactionService(
                 new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
-                _transactionServiceLoggerMock.Object,
+                _transactionServiceLoggerMock.Object, _transactionStoreAPIConnectionStringsMock.Object,
                 _messageHandlerMock.Object);
         }
 

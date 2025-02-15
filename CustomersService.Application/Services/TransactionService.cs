@@ -6,14 +6,17 @@ using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
+using CustomersService.Core;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CustomersService.Application.Services;
 
 public class TransactionService(
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
-        ILogger<TransactionService> logger)
+        ILogger<TransactionService> logger,
+        IOptions<TransactionStoreAPIConnectionStrings> options)
     : ITransactionService
 {
     private readonly CommonHttpClient _httpClient;
@@ -22,10 +25,11 @@ public class TransactionService(
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
         ILogger<TransactionService> logger,
+        IOptions<TransactionStoreAPIConnectionStrings> options,
         HttpMessageHandler? handler = null) :
-        this(customerUtils, accountUtils, logger)
+        this(customerUtils, accountUtils, logger, options)
     {
-        _httpClient = new CommonHttpClient("http://194.147.90.249:9091/api/v1/transactions", handler);
+        _httpClient = new CommonHttpClient(options.Value.TransactionStoreTransactions, handler);
     }
 
     public async Task<TransactionResponse> GetByIdAsync(Guid id)

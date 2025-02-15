@@ -1,7 +1,7 @@
 using CustomersService.Application.Configuration;
+using CustomersService.Core;
 using CustomersService.Persistence.Configuration;
 using CustomersService.Presentation.Configuration;
-using Serilog;
 
 namespace CustomersService.Presentation;
 
@@ -25,6 +25,9 @@ public class Program
         builder.Services.AddSwaggerGen();
         builder.Host.ConfigureCustomLogging();
         var configuration = builder.Configuration;
+
+        builder.Services.AddOptions<TransactionStoreAPIConnectionStrings>()
+            .Bind(builder.Configuration.GetSection("TransactionStoreAPIConnectionStrings"));
 
         builder.Services.ConfigureMappers();
         builder.Services.AddPersistenceServices(configuration);

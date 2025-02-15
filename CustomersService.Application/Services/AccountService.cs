@@ -5,11 +5,13 @@ using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CustomersService.Application.Services;
 
@@ -18,7 +20,8 @@ public class AccountService(
         IMapper mapper,
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
-        ILogger<AccountService> logger) 
+        ILogger<AccountService> logger,
+        IOptions<TransactionStoreAPIConnectionStrings> options) 
     : IAccountService
 {
     private readonly CommonHttpClient _httpClient;
@@ -28,11 +31,12 @@ public class AccountService(
         IMapper mapper,
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
-        ILogger<AccountService> logger, 
+        ILogger<AccountService> logger,
+         IOptions<TransactionStoreAPIConnectionStrings> options,
         HttpMessageHandler? handler = null): 
-        this(accountRepository, mapper, customerUtils, accountUtils, logger)
+        this(accountRepository, mapper, customerUtils, accountUtils, logger, options)
     {
-        _httpClient = new("http://194.147.90.249:9091/api/v1/accounts", handler);
+        _httpClient = new(options.Value.TransactionStoreAccounts, handler);
     }
 
     public async Task<Guid> CreateAsync(AccountCreationModel accountToCreate)
