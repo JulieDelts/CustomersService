@@ -1,7 +1,10 @@
 ﻿using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace CustomersService.Persistence.Repositories;
 
@@ -46,19 +49,25 @@ public class CustomerRepository(
         logger.LogDebug("Successfully set VIP status for customer {CustomerId}", customer.Id);
     }
 
-    public async Task BatchUpdateRoleAsync(Dictionary<Customer, Role> customersWithRoles)
+    public async Task BatchUpdateRoleAsync(List<Guid> customerIds)
     {
         logger.LogDebug("Batch updating roles for customers");
-        logger.LogTrace("Customers with roles data: {@CustomersWithRoles}", customersWithRoles);
+        logger.LogTrace("Customers with roles data: {@CustomerIds}", customerIds);
 
-        foreach (var customerWithRole in customersWithRoles)
+        var vipAccounts = new List<int>() 
+        { (int)Currency.JPY, (int)Currency.CNY, (int)Currency.RSD, (int)Currency.BGN, (int)Currency.ARS };
+
+        await context.Database.ExecuteSqlRawAsync(
+        "SELECT \"BatchUpdateRole\"(@customer_ids, @currencies)",
+        new NpgsqlParameter("customer_ids", customerIds.ToArray())
         {
-            var customer = customerWithRole.Key;
-            var newRole = customerWithRole.Value;
-            customer.Role = newRole;
-        }
+            NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Uuid
+        },
+        new NpgsqlParameter("currencies", vipAccounts.ToArray())
+        {
+            NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Integer
+        });
 
-        await context.SaveChangesAsync();
         logger.LogDebug("Successfully batch updated roles for customers");
     }
 

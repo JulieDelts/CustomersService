@@ -8,6 +8,6 @@ namespace CustomersService.Persistence.Interfaces
         Task UpdateProfileAsync(Customer customer, Customer customerUpdate);
         Task UpdatePasswordAsync(Customer customer, string newPassword);
         Task SetManualVipAsync(Customer customer, DateTime vipExpirationDate);
-        Task BatchUpdateRoleAsync(Dictionary<Customer, Role> customersWithRoles);
+        Task BatchUpdateRoleAsync(List<Guid> customerIds);
     }
 }

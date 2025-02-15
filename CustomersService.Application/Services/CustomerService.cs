@@ -153,39 +153,10 @@ public class CustomerService(
         logger.LogInformation("Batch updating roles for VIP customers");
         logger.LogTrace("VIP customer IDs: {@VipCustomerIds}", vipCustomerIds);
 
-        var vipCustomers = await customerRepository.GetAllByConditionAsync(c =>
-            vipCustomerIds.Contains(c.Id) && c.Role != Role.VIP);
-        logger.LogTrace("Retrieved VIP customers: {@VipCustomers}", vipCustomers);
-
-        var customersWithDueVip = await customerRepository.GetAllByConditionAsync(c =>
-            c.Role == Role.VIP
-            && !vipCustomerIds.Contains(c.Id)
-            && (c.CustomVipDueDate == null ||
-            c.CustomVipDueDate < DateTime.Now));
-        logger.LogTrace("Retrieved customers with due VIP: {@CustomersWithDueVip}", customersWithDueVip);
-
-        var vipCustomersDictionary = vipCustomers.ToDictionary(c => c, c => Role.VIP);
-        var customersWithDueVipDictionary = customersWithDueVip.ToDictionary(c => c, c => Role.Regular);
-        var customersWithUpdatedRoles = vipCustomersDictionary.Concat(customersWithDueVipDictionary).ToDictionary();
-        logger.LogTrace("Customers with updated roles: {@CustomersWithUpdatedRoles}", customersWithUpdatedRoles);
-
-        var regularAccounts = new List<Currency> { Currency.RUB, Currency.USD, Currency.EUR };
-
-        var accountsToActivate = await accountRepository.GetAllByConditionAsync(a =>
-        vipCustomerIds.Contains(a.CustomerId)
-        && !regularAccounts.Contains(a.Currency));
-        logger.LogTrace("Accounts to activate: {@AccountsToActivate}", accountsToActivate);
-
-        var customerWithDueVipIds = customersWithDueVip.Select(c => c.Id).ToList();
-        var accountsToDeactivate = await accountRepository.GetAllByConditionAsync(a =>
-        customerWithDueVipIds.Contains(a.CustomerId)
-        && !regularAccounts.Contains(a.Currency));
-        logger.LogTrace("Accounts to deactivate: {@AccountsToDeactivate}", accountsToDeactivate);
-
         try
         {
-            await customerUnitOfWork.BatchUpdateRoleAsync(customersWithUpdatedRoles, accountsToActivate, accountsToDeactivate);
-            logger.LogInformation("Successfully batch updated roles for VIP customers");
+            await customerUnitOfWork.BatchUpdateRoleAsync(vipCustomerIds);
+            logger.LogInformation("Successfully batch updated roles for customers");
         }
         catch (Exception ex)
         {
