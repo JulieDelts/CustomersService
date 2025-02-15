@@ -6,7 +6,6 @@ namespace CustomersService.Presentation.Models.Responses
     {
         public Guid Id { get; set; }
         public Guid CustomerId { get; set; }
-        public DateTime DateCreated { get; set; }
         public Currency Currency { get; set; }
         public bool IsDeactivated { get; set; } 
     }

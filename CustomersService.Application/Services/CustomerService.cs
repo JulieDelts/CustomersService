@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
@@ -56,7 +56,7 @@ public class CustomerService(
     {
         logger.LogInformation("Retrieving all customers with pageNumber {PageNumber} and pageSize {PageSize}", pageNumber, pageSize);
 
-        var customerDTOs = await customerRepository.GetAllAsync(pageNumber ?? 0, pageSize ?? 10);
+        var customerDTOs = await customerRepository.GetAllAsync(pageNumber ?? 1, pageSize ?? 10);
         var customers = mapper.Map<List<CustomerInfoModel>>(customerDTOs);
 
         logger.LogInformation("Successfully retrieved {Count} customers", customers.Count);
