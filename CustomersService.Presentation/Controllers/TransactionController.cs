@@ -1,6 +1,7 @@
 ﻿using CustomersService.Application.Interfaces;
 using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.Enum;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CustomersService.Presentation.Controllers
@@ -17,7 +18,7 @@ namespace CustomersService.Presentation.Controllers
             logger.LogInformation("Received request to create deposit transaction for account {AccountId}", request.AccountId);
             logger.LogTrace("Request data: {@Request}", request);
 
-            var transactionId = await transactionService.CreateDepositTransactionAsync(request);
+            var transactionId = await transactionService.CreateSimpleTransactionAsync(request, TransactionType.Deposit);
             logger.LogInformation("Transaction created successfully with Id {TransactionId}", transactionId);
 
             return Ok(transactionId);
@@ -29,7 +30,7 @@ namespace CustomersService.Presentation.Controllers
             logger.LogInformation("Received request to create deposit transaction for account {AccountId}", request.AccountId);
             logger.LogTrace("Request data: {@Request}", request);
 
-            var transactionId = await transactionService.CreateWithdrawTransactionAsync(request);
+            var transactionId = await transactionService.CreateSimpleTransactionAsync(request, TransactionType.Withdrawal);
             logger.LogInformation("Transaction created successfully with Id {TransactionId}", transactionId);
 
             return Ok(transactionId);

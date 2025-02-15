@@ -1,12 +1,10 @@
 ﻿
 using System.Net;
-using AutoMapper;
 using CustomersService.Application.Interfaces;
 using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Presentation.Controllers;
-using CustomersService.Presentation.Mappings;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -53,8 +51,9 @@ namespace CustomersService.Presentation.Tests
             // Arrange
             var expectedStatusCode = HttpStatusCode.OK;
             var accountId = Guid.NewGuid();
+            var transactionType = TransactionType.Deposit;
             var transaction = new CreateTransactionRequest() { AccountId = accountId, Amount = 100 };
-            _transactionServiceMock.Setup(t => t.CreateDepositTransactionAsync(transaction)).ReturnsAsync(Guid.NewGuid());
+            _transactionServiceMock.Setup(t => t.CreateSimpleTransactionAsync(transaction, transactionType)).ReturnsAsync(Guid.NewGuid());
 
             //Act
             var result = await _sut.CreateDepositTransactionAsync(transaction);
@@ -64,8 +63,8 @@ namespace CustomersService.Presentation.Tests
             Assert.IsType<ActionResult<Guid>>(result);
             Assert.Equal((int)expectedStatusCode, statusCode);
             _transactionServiceMock.Verify(t =>
-               t.CreateDepositTransactionAsync(It.Is<CreateTransactionRequest>(t => 
-               t.AccountId == transaction.AccountId && t.Amount == transaction.Amount)),
+               t.CreateSimpleTransactionAsync(It.Is<CreateTransactionRequest>(t => 
+               t.AccountId == transaction.AccountId && t.Amount == transaction.Amount), It.Is<TransactionType>(t => t == TransactionType.Deposit)),
                Times.Once);
         }
 
@@ -75,8 +74,9 @@ namespace CustomersService.Presentation.Tests
             // Arrange
             var expectedStatusCode = HttpStatusCode.OK;
             var accountId = Guid.NewGuid();
-            var transaction = new CreateTransactionRequest() { AccountId = accountId, Amount = -100 };
-            _transactionServiceMock.Setup(t => t.CreateWithdrawTransactionAsync(transaction)).ReturnsAsync(Guid.NewGuid());
+            var transactionType = TransactionType.Withdrawal;
+            var transaction = new CreateTransactionRequest() { AccountId = accountId, Amount = 100 };
+            _transactionServiceMock.Setup(t => t.CreateSimpleTransactionAsync(transaction, transactionType)).ReturnsAsync(Guid.NewGuid());
 
             //Act
             var result = await _sut.CreateWithdrawTransactionAsync(transaction);
@@ -86,8 +86,8 @@ namespace CustomersService.Presentation.Tests
             Assert.IsType<ActionResult<Guid>>(result);
             Assert.Equal((int)expectedStatusCode, statusCode);
             _transactionServiceMock.Verify(t =>
-               t.CreateWithdrawTransactionAsync(It.Is<CreateTransactionRequest>(t =>
-               t.AccountId == transaction.AccountId && t.Amount == transaction.Amount)),
+               t.CreateSimpleTransactionAsync(It.Is<CreateTransactionRequest>(t =>
+               t.AccountId == transaction.AccountId && t.Amount == transaction.Amount), It.Is<TransactionType>(t => t == TransactionType.Withdrawal)),
                Times.Once);
         }
 

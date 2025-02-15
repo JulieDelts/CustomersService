@@ -379,5 +379,36 @@ namespace CustomersService.Application.Tests
             //Assert
             Assert.Equal(message, exception.Message);
         }
+
+        [Fact]
+        public async Task BatchUpdateRoleAsync_BatchUpdateRoleSuccess()
+        {
+            // Arrange
+            var customerIds = new List<Guid>();
+
+            // Act
+            await _sut.BatchUpdateRoleAsync(customerIds);
+
+            // Assert
+            _customerUnitOfWorkMock.Verify(t =>
+                t.BatchUpdateRoleAsync(It.IsAny<List<Guid>>()),
+                Times.Once
+            );
+        }
+
+        [Fact]
+        public async Task BatchUpdateRoleAsync_TransactionFailed_TransactionFailedExceptionThrown()
+        {
+            // Arrange
+            var customerIds = new List<Guid>();
+            var message = "Transaction failed.";
+            _customerUnitOfWorkMock.Setup(t => t.BatchUpdateRoleAsync(It.IsAny<List<Guid>>())).ThrowsAsync(new Exception());
+
+            //Act
+            var exception = await Assert.ThrowsAsync<TransactionFailedException>(async () => await _sut.BatchUpdateRoleAsync(customerIds));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
     }
 }

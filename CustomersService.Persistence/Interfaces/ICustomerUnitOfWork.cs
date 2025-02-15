@@ -1,5 +1,4 @@
 ﻿
-using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 
 namespace CustomersService.Persistence.Interfaces
@@ -11,6 +10,6 @@ namespace CustomersService.Persistence.Interfaces
         Task CreateCustomerAsync(Customer customer, Account account);
         void Rollback();
         Task SetManualVipAsync(Customer customer, DateTime vipExpirationDate, List<Account> accounts);
-        Task BatchUpdateRoleAsync(Dictionary<Customer, Role> customers, List<Account> accountsToActivate, List<Account> accountsToDeactivate);
+        Task BatchUpdateRoleAsync(List<Guid> customerIds);
     }
 }

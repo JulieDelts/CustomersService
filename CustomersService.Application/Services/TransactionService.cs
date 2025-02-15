@@ -1,4 +1,4 @@
-﻿
+
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
@@ -22,10 +22,11 @@ public class TransactionService(
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
         ILogger<TransactionService> logger,
-        HttpMessageHandler? handler = null) :
-        this(customerUtils, accountUtils, logger)
+        ILogger<CommonHttpClient> commonHttpClientLogger,
+        HttpMessageHandler? handler = null):
+        this (customerUtils, accountUtils, logger)
     {
-        _httpClient = new CommonHttpClient("http://194.147.90.249:9091/api/v1/transactions", handler);
+        _httpClient = new CommonHttpClient("http://194.147.90.249:9091/api/v1/transactions", commonHttpClientLogger,handler);
     }
 
     public async Task<TransactionResponse> GetByIdAsync(Guid id)
@@ -36,26 +37,21 @@ public class TransactionService(
         return transaction;
     }
 
-    public async Task<Guid> CreateDepositTransactionAsync(CreateTransactionRequest requestModel)
+    public async Task<Guid> CreateSimpleTransactionAsync(CreateTransactionRequest requestModel, TransactionType transactionType)
     {
-        logger.LogInformation("Creating deposit transaction for account {AccountId}", requestModel.AccountId);
+        string path;
+        if (transactionType == TransactionType.Deposit)
+            path = "/deposit";
+        else if (transactionType == TransactionType.Withdrawal)
+            path = "/withdraw";
+        else throw new EntityConflictException("TransactionType is not correct.");
+
+        logger.LogInformation("Creating simple transaction for account {AccountId}", requestModel.AccountId);
         logger.LogTrace("Transaction request data: {@RequestModel}", requestModel);
 
         await ValidateSimpleTransactionRequestAsync(requestModel);
 
-        var transactionId = await _httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>("/deposit", requestModel);
-        logger.LogInformation("Successfully created transaction with ID {TransactionId}", transactionId);
-        return transactionId;
-    }
-
-    public async Task<Guid> CreateWithdrawTransactionAsync(CreateTransactionRequest requestModel)
-    {
-        logger.LogInformation("Creating withdraw transaction for account {AccountId}", requestModel.AccountId);
-        logger.LogTrace("Transaction request data: {@RequestModel}", requestModel);
-
-        await ValidateSimpleTransactionRequestAsync(requestModel);
-
-        var transactionId = await _httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>("/withdraw", requestModel);
+        var transactionId = await _httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>(path, requestModel);
         logger.LogInformation("Successfully created transaction with ID {TransactionId}", transactionId);
         return transactionId;
     }
