@@ -16,7 +16,6 @@ using CustomersService.Persistence.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Moq.Protected;
 
 namespace CustomersService.Application.Tests
 {
@@ -203,17 +202,7 @@ namespace CustomersService.Application.Tests
 
             var response = JsonSerializer.Serialize(accountBalance);
 
-            var mockProtected = _messageHandlerMock.Protected();
-            var setupApiRequest = mockProtected
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage()
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(response)
-                });
+            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
 
             //act 
             var result = await _sut.GetFullInfoByIdAsync(accountId);
@@ -223,7 +212,7 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task GetFullInfoByIdAsync_InternalServerError_BadGatewayExceptionThrown()
+        public async Task GetFullInfoByIdAsync_InternalServerErrorReturned_BadGatewayExceptionThrown()
         {
             //arrange
             var accountId = Guid.NewGuid();
@@ -232,16 +221,7 @@ namespace CustomersService.Application.Tests
             var message = "Invalid response from the upstream server.";
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
 
-            var mockProtected = _messageHandlerMock.Protected();
-            var setupApiRequest = mockProtected
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage()
-                {
-                    StatusCode = HttpStatusCode.InternalServerError
-                });
+            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
 
             //act 
             var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetFullInfoByIdAsync(accountId));
@@ -251,7 +231,7 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task GetFullInfoByIdAsync_RequestError_ServiceUnavailableExceptionThrown()
+        public async Task GetFullInfoByIdAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
         {
             //arrange
             var accountId = Guid.NewGuid();
@@ -260,16 +240,7 @@ namespace CustomersService.Application.Tests
             var message = "Request to the service failed.";
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
 
-            var mockProtected = _messageHandlerMock.Protected();
-            var setupApiRequest = mockProtected
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage()
-                {
-                    StatusCode = HttpStatusCode.NotFound
-                });
+            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
 
             //act 
             var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetFullInfoByIdAsync(accountId));
@@ -309,18 +280,7 @@ namespace CustomersService.Application.Tests
             };
 
             var response = JsonSerializer.Serialize(transactions);
-
-            var mockProtected = _messageHandlerMock.Protected();
-            var setupApiRequest = mockProtected
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage()
-                {
-                    StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent(response)
-                });
+            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
 
             //act 
             var result = await _sut.GetTransactionsByAccountIdAsync(accountId);
@@ -330,23 +290,14 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task GetTransactionsByAccountIdAsync_InternalServerError_BadGatewayExceptionThrown()
+        public async Task GetTransactionsByAccountIdAsync_InternalServerErrorReturned_BadGatewayExceptionThrown()
         {
             //arrange
             var accountId = Guid.NewGuid();
             var apiEndpoint = $"/{accountId}/transactions";
             var message = "Invalid response from the upstream server.";
 
-            var mockProtected = _messageHandlerMock.Protected();
-            var setupApiRequest = mockProtected
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage()
-                {
-                    StatusCode = HttpStatusCode.InternalServerError
-                });
+            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
 
             //act 
             var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId));
@@ -356,23 +307,14 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task GetTransactionsByAccountIdAsync_RequestError_ServiceUnavailableExceptionThrown()
+        public async Task GetTransactionsByAccountIdAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
         {
             //arrange
             var accountId = Guid.NewGuid();
             var apiEndpoint = $"/{accountId}/transactions";
             var message = "Request to the service failed.";
 
-            var mockProtected = _messageHandlerMock.Protected();
-            var setupApiRequest = mockProtected
-                .Setup<Task<HttpResponseMessage>>(
-                    "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
-                    ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage()
-                {
-                    StatusCode = HttpStatusCode.NotFound
-                });
+            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
 
             //act 
             var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId));
