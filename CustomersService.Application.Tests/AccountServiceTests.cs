@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using AutoMapper;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Integrations;
 using CustomersService.Application.Mappings;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services;
@@ -27,6 +28,7 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
+        private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
         private readonly AccountService _sut;
 
         public AccountServiceTests()
@@ -36,6 +38,7 @@ namespace CustomersService.Application.Tests
             _messageHandlerMock = new();
             _customerUtilsLoggerMock = new();
             _accountUtilsLoggerMock = new();
+            _commonHttpClientLoggerMock = new();
             _accountServiceLoggerMock = new();
             var config = new MapperConfiguration(
             cfg =>
@@ -48,7 +51,8 @@ namespace CustomersService.Application.Tests
                 _mapper,
                 new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
-                _accountServiceLoggerMock.Object, 
+                _accountServiceLoggerMock.Object,
+                _commonHttpClientLoggerMock.Object,
                 _messageHandlerMock.Object
             );
         }

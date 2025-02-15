@@ -1,4 +1,4 @@
-﻿
+
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
@@ -22,10 +22,11 @@ public class TransactionService(
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
         ILogger<TransactionService> logger,
-        HttpMessageHandler? handler = null) :
-        this(customerUtils, accountUtils, logger)
+        ILogger<CommonHttpClient> commonHttpClientLogger,
+        HttpMessageHandler? handler = null):
+        this (customerUtils, accountUtils, logger)
     {
-        _httpClient = new CommonHttpClient("http://194.147.90.249:9091/api/v1/transactions", handler);
+        _httpClient = new CommonHttpClient("http://194.147.90.249:9091/api/v1/transactions", commonHttpClientLogger,handler);
     }
 
     public async Task<TransactionResponse> GetByIdAsync(Guid id)
