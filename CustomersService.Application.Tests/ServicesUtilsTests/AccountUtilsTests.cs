@@ -3,6 +3,7 @@ using CustomersService.Application.Exceptions;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace CustomersService.Application.Tests.ServicesUtilsTests
@@ -10,12 +11,14 @@ namespace CustomersService.Application.Tests.ServicesUtilsTests
     public class AccountUtilsTests
     {
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
+        private readonly Mock<ILogger<AccountUtils>> _loggerMock;
         private readonly AccountUtils _sut;
 
         public AccountUtilsTests()
         {
             _accountRepositoryMock = new();
-            _sut = new(_accountRepositoryMock.Object);
+            _loggerMock = new();
+            _sut = new(_accountRepositoryMock.Object, _loggerMock.Object);
         }
 
         [Fact]

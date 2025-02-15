@@ -11,6 +11,7 @@ using CustomersService.Core.Enum;
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Tests.TestCases;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 
 namespace CustomersService.Application.Tests
 {
@@ -19,6 +20,8 @@ namespace CustomersService.Application.Tests
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
         private readonly Mock<ICustomerUnitOfWork> _customerUnitOfWorkMock;
+        private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
+        private readonly Mock<ILogger<CustomerService>> _customerServiceLoggerMock;
 
         private readonly Mapper _mapper;
         private readonly CustomerService _sut;
@@ -28,6 +31,8 @@ namespace CustomersService.Application.Tests
             _accountRepositoryMock = new();
             _customerRepositoryMock = new();
             _customerUnitOfWorkMock = new();
+            _customerUtilsLoggerMock = new();
+            _customerServiceLoggerMock = new();
             var config = new MapperConfiguration(
             cfg =>
             {
@@ -38,8 +43,9 @@ namespace CustomersService.Application.Tests
                 _customerRepositoryMock.Object,
                 _accountRepositoryMock.Object,
                 _mapper,
-                new CustomerUtils(_customerRepositoryMock.Object),
-                _customerUnitOfWorkMock.Object
+                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
+                _customerUnitOfWorkMock.Object,
+                _customerServiceLoggerMock.Object
             );
         }
 

@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using AutoMapper;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Integrations;
 using CustomersService.Application.Mappings;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services;
@@ -13,6 +14,7 @@ using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 
@@ -24,6 +26,10 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
         private Mock<HttpMessageHandler> _messageHandlerMock;
         private readonly Mapper _mapper;
+        private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
+        private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
+        private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
+        private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
         private readonly AccountService _sut;
 
         public AccountServiceTests()
@@ -31,6 +37,10 @@ namespace CustomersService.Application.Tests
             _accountRepositoryMock = new();
             _customerRepositoryMock = new();
             _messageHandlerMock = new();
+            _customerUtilsLoggerMock = new();
+            _accountUtilsLoggerMock = new();
+            _commonHttpClientLoggerMock = new();
+            _accountServiceLoggerMock = new();
             var config = new MapperConfiguration(
             cfg =>
             {
@@ -40,8 +50,10 @@ namespace CustomersService.Application.Tests
             _sut = new(
                 _accountRepositoryMock.Object,
                 _mapper,
-                new CustomerUtils(_customerRepositoryMock.Object),
-                new AccountUtils(_accountRepositoryMock.Object),
+                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
+                new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
+                _accountServiceLoggerMock.Object,
+                _commonHttpClientLoggerMock.Object,
                 _messageHandlerMock.Object
             );
         }

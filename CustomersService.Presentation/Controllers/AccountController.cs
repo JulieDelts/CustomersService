@@ -12,7 +12,8 @@ namespace CustomersService.Presentation.Controllers;
 [ApiController]
 public class AccountController(
         IAccountService accountService,
-        IMapper mapper) 
+        IMapper mapper,
+        ILogger<AccountController> logger) 
     : ControllerBase
 {
     [HttpPost]

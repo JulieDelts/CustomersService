@@ -2,6 +2,7 @@
 using System.Net;
 using System.Text.Json;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
@@ -11,6 +12,7 @@ using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
 
@@ -22,15 +24,26 @@ namespace CustomersService.Application.Tests
         private Mock<HttpMessageHandler> _messageHandlerMock;
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
+        private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
+        private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
+        private readonly Mock<ILogger<TransactionService>> _transactionServiceLoggerMock;
+        private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
+
 
         public TransactionServiceTests()
         {
             _messageHandlerMock = new();
             _accountRepositoryMock = new();
             _customerRepositoryMock = new();
+            _customerUtilsLoggerMock = new Mock<ILogger<CustomerUtils>>();
+            _accountUtilsLoggerMock = new Mock<ILogger<AccountUtils>>();
+            _transactionServiceLoggerMock = new Mock<ILogger<TransactionService>>();
+            _commonHttpClientLoggerMock = new();
             _sut = new TransactionService(
-                new CustomerUtils(_customerRepositoryMock.Object),
-                new AccountUtils(_accountRepositoryMock.Object),
+                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
+                new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
+                _transactionServiceLoggerMock.Object,
+                _commonHttpClientLoggerMock.Object,
                 _messageHandlerMock.Object);
         }
 
