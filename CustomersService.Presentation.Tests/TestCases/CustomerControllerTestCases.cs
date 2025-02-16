@@ -34,6 +34,29 @@ namespace CustomersService.Presentation.Tests.TestCases
             yield return new object[] { customerModels };
         }
 
+        public static IEnumerable<object[]> Accounts()
+        {
+            var accountModels = new List<AccountInfoModel>()
+                {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerId = Guid.NewGuid(),
+                    Currency = Currency.USD,
+                    IsDeactivated = false
+                },
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    CustomerId = Guid.NewGuid(),
+                    Currency = Currency.EUR,
+                    IsDeactivated = false
+                }
+            };
+
+            yield return new object[] { accountModels };
+        }
+
         public static IEnumerable<object[]> CustomerToRegister()
         {
             var customerRequest = new RegisterCustomerRequest()

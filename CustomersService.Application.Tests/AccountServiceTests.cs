@@ -31,7 +31,8 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
         private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
-        private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _optionsMock;
+        private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _apiOptionsMock;
+        private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
         private readonly AccountService _sut;
 
         public AccountServiceTests()
@@ -43,8 +44,9 @@ namespace CustomersService.Application.Tests
             _accountUtilsLoggerMock = new();
             _accountServiceLoggerMock = new();
             _commonHttpClientLoggerMock = new();
-            _optionsMock = new();
-            _optionsMock.Setup(o => o.Value).Returns(new TransactionStoreAPIConnectionStrings
+            _apiOptionsMock = new();
+            _authConfigOptionsMock = new();
+            _apiOptionsMock.Setup(o => o.Value).Returns(new TransactionStoreAPIConnectionStrings
             {
                 Accounts = "v1/accounts",
             });
@@ -64,11 +66,11 @@ namespace CustomersService.Application.Tests
             _sut = new(
                 _accountRepositoryMock.Object,
                 _mapper,
-                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
+                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object, _authConfigOptionsMock.Object),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _accountServiceLoggerMock.Object,
                 commonHttpClient,
-                _optionsMock.Object
+                _apiOptionsMock.Object
             );
         }
 
@@ -201,7 +203,8 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var account = new Account() { Id = accountId };
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId };
             var accountBalance = new BalanceResponse()
             {
                 AccountId = accountId,
@@ -210,6 +213,7 @@ namespace CustomersService.Application.Tests
             var accountFullInfoModel = new AccountFullInfoModel()
             {
                 Id = accountId,
+                CustomerId = customerId,
                 Balance = accountBalance.Balance
             };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
@@ -219,7 +223,7 @@ namespace CustomersService.Application.Tests
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
 
             //act 
-            var result = await _sut.GetFullInfoByIdAsync(accountId);
+            var result = await _sut.GetFullInfoByIdAsync(accountId, customerId);
 
             //assert
             accountFullInfoModel.Should().BeEquivalentTo(result);
@@ -230,14 +234,15 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var account = new Account() { Id = accountId };
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId};
             var message = "Invalid response from the upstream server.";
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
 
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
 
             //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetFullInfoByIdAsync(accountId));
+            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetFullInfoByIdAsync(accountId, customerId));
 
             // Assert
             Assert.Equal(message, exception.Message);
@@ -248,19 +253,36 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var account = new Account() { Id = accountId };
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId };
             var message = "Request to the service failed.";
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
 
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
 
             //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetFullInfoByIdAsync(accountId));
+            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetFullInfoByIdAsync(accountId, customerId));
 
             // Assert
             Assert.Equal(message, exception.Message);
         }
 
+        [Fact]
+        public async Task GetFullInfoByIdAsync_UserNotAccountOwner_AuthorizationFailedExceptionThrown()
+        {
+            //arrange
+            var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = Guid.NewGuid() };
+            var message = "Customers are only allowed to see their own account info.";
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+
+            //act 
+            var exception = await Assert.ThrowsAsync<AuthorizationFailedException>(async () => await _sut.GetFullInfoByIdAsync(accountId, customerId));
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+        }
 
         [Theory]
         [MemberData(nameof(AccountServiceTestCases.AccountWithFullInfo), MemberType = typeof(AccountServiceTestCases))]
@@ -278,6 +300,8 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId };
             var transactions = new List<TransactionResponse>() 
             { 
                 new TransactionResponse()
@@ -290,11 +314,12 @@ namespace CustomersService.Application.Tests
                 }
             };
 
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             var response = JsonSerializer.Serialize(transactions);
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
 
             //act 
-            var result = await _sut.GetTransactionsByAccountIdAsync(accountId);
+            var result = await _sut.GetTransactionsByAccountIdAsync(accountId, customerId);
 
             //assert
             transactions.Should().BeEquivalentTo(result);
@@ -305,12 +330,15 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             var message = "Invalid response from the upstream server.";
 
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
 
             //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId));
+            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId, customerId));
 
             // Assert
             Assert.Equal(message, exception.Message);
@@ -321,13 +349,33 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             var message = "Request to the service failed.";
 
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
 
             //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId));
+            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId, customerId));
 
+            // Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task GetTransactionsByAccountIdAsync_UserNotAccountOwner_ServiceUnavailableExceptionThrown()
+        {
+            //arrange
+            var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = Guid.NewGuid() };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            var message = "Customers are only allowed to see their own account info.";
+          
+            //act 
+            var exception = await Assert.ThrowsAsync<AuthorizationFailedException>(async () => await _sut.GetFullInfoByIdAsync(accountId, customerId));
+            
             // Assert
             Assert.Equal(message, exception.Message);
         }

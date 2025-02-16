@@ -43,6 +43,14 @@ namespace CustomersService.Presentation.Configuration
             {
                 await HandleTransactionFailedExceptionAsync(httpContext, ex);
             }
+            catch (ClaimsRetrievalException ex)
+            {
+                await HandleClaimsRetrievalExceptionAsync(httpContext, ex);
+            }
+            catch (AuthorizationFailedException ex)
+            {
+                await HandleAuthorizationFailedExceptionAsync(httpContext, ex);
+            }
             catch (Exception ex)
             {
                 await HandleExceptionAsync(httpContext, ex);
@@ -82,6 +90,18 @@ namespace CustomersService.Presentation.Configuration
         private async Task HandleTransactionFailedExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.StatusCode = (int)HttpStatusCode.ServiceUnavailable;
+            await WriteErrorDetailsAsync(context, exception.Message);
+        }
+
+        private async Task HandleClaimsRetrievalExceptionAsync(HttpContext context, Exception exception)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+            await WriteErrorDetailsAsync(context, exception.Message);
+        }
+
+        private async Task HandleAuthorizationFailedExceptionAsync(HttpContext context, Exception exception)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
             await WriteErrorDetailsAsync(context, exception.Message);
         }
 

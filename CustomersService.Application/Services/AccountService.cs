@@ -82,11 +82,18 @@ public class AccountService(
         return accounts;
     }
 
-    public async Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id)
+    public async Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id, Guid customerId)
     {
         logger.LogInformation("Retrieving full account info for account {AccountId}", id);
 
         var accountDTO = await accountUtils.GetByIdAsync(id);
+
+        if (accountDTO.CustomerId != customerId)
+        {
+            logger.LogWarning("Customers are only allowed to see their own account info {accountId}.", id);
+            throw new AuthorizationFailedException("Customers are only allowed to see their own account info.");
+        }
+
         var account = mapper.Map<AccountFullInfoModel>(accountDTO);
         var accountBalanceModel = await httpClient.SendGetRequestAsync<BalanceResponse>($"{controllerPath}/{id}/balance");
         account.Balance = accountBalanceModel.Balance;
@@ -95,9 +102,17 @@ public class AccountService(
         return account;
     }
 
-    public async Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id)
+    public async Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id, Guid customerId)
     {
         logger.LogInformation("Retrieving transactions for account {AccountId}", id);
+
+        var accountDTO = await accountUtils.GetByIdAsync(id);
+
+        if (accountDTO.CustomerId != customerId)
+        {
+            logger.LogWarning("Customers are only allowed to see their own account info {accountId}.", id);
+            throw new AuthorizationFailedException("Customers are only allowed to see their own account info.");
+        }
 
         var transactions = await httpClient.SendGetRequestAsync<List<TransactionResponse>>($"{controllerPath}/{id}/transactions");
 

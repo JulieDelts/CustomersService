@@ -70,45 +70,15 @@ public class AccountControllerTests
     }
 
     [Fact]
-    public async Task GetAccountsByCustomerIdAsync_GetSuccess()
-    {
-        // Arrange
-        var expectedStatusCode = HttpStatusCode.OK;
-        var customerId = Guid.NewGuid();
-        var accounts = new List<AccountInfoModel>();
-        _accountServiceMock.Setup(t => t.GetAllByCustomerIdAsync(customerId)).ReturnsAsync(accounts);
-
-        //Act
-        var result = await _sut.GetAccountsByCustomerIdAsync(customerId);
-        var statusCode = (result.Result as ObjectResult).StatusCode;
-
-        //Assert
-        Assert.IsType<ActionResult<List<AccountResponse>>>(result);
-        Assert.Equal((int)expectedStatusCode, statusCode);
-        _accountServiceMock.Verify(t =>
-           t.GetAllByCustomerIdAsync(customerId),
-           Times.Once);
-    }
-
-    [Theory]
-    [MemberData(nameof(AccountControllerTestCases.Accounts), MemberType = typeof(AccountControllerTestCases))]
-    public void GetAccountsByCustomerIdAsync_ValidModel_MappingSuccess(List<AccountInfoModel> accountModels)
-    {
-        //Act
-        var accounts = _mapper.Map<List<AccountResponse>>(accountModels);
-
-        //Assert
-        accounts.Should().BeEquivalentTo(accountModels);
-    }
-
-    [Fact]
     public async Task GetByIdAsync_GetSuccess()
     {
         // Arrange
         var expectedStatusCode = HttpStatusCode.OK;
         var id = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
         var accountModel = new AccountFullInfoModel();
-        _accountServiceMock.Setup(t => t.GetFullInfoByIdAsync(id)).ReturnsAsync(accountModel);
+        _accountServiceMock.Setup(t => t.GetFullInfoByIdAsync(id, customerId)).ReturnsAsync(accountModel);
+        UserClaimsMockSetup.SetUserClaims(_sut, customerId, Role.Regular);
 
         //Act
         var result = await _sut.GetByIdAsync(id);
@@ -118,7 +88,7 @@ public class AccountControllerTests
         Assert.IsType<ActionResult<AccountFullInfoResponse>>(result);
         Assert.Equal((int)expectedStatusCode, statusCode);
         _accountServiceMock.Verify(t =>
-           t.GetFullInfoByIdAsync(id),
+           t.GetFullInfoByIdAsync(id, customerId),
            Times.Once);
     }
 
@@ -177,8 +147,10 @@ public class AccountControllerTests
         // Arrange
         var expectedStatusCode = HttpStatusCode.OK;
         var id = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
         var transactions = new List<TransactionResponse>();
-        _accountServiceMock.Setup(t => t.GetTransactionsByAccountIdAsync(id)).ReturnsAsync(transactions);
+        UserClaimsMockSetup.SetUserClaims(_sut, customerId, Role.Regular);
+        _accountServiceMock.Setup(t => t.GetTransactionsByAccountIdAsync(id, customerId)).ReturnsAsync(transactions);
 
         //Act
         var result = await _sut.GetTransactionsByAccountId(id);
@@ -188,7 +160,7 @@ public class AccountControllerTests
         Assert.IsType<ActionResult<List<TransactionResponse>>>(result);
         Assert.Equal((int)expectedStatusCode, statusCode);
         _accountServiceMock.Verify(t =>
-           t.GetTransactionsByAccountIdAsync(id),
+           t.GetTransactionsByAccountIdAsync(id, customerId),
            Times.Once);
     }
 }

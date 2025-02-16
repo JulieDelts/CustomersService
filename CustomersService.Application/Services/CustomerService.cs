@@ -37,7 +37,6 @@ public class CustomerService(
 
         var accountDTO = new Account() { Currency = Currency.RUB };
 
-
         try
         {
             await customerUnitOfWork.CreateCustomerAsync(customerDTO, accountDTO);
@@ -49,6 +48,22 @@ public class CustomerService(
             logger.LogError(ex, "Transaction failed while registering customer with email {Email}", MaskEmail(customerToRegister.Email));
             customerUnitOfWork.Rollback();
             throw new TransactionFailedException("Transaction failed.");
+        }
+    }
+
+    public async Task<string> AuthenticateAsync(string email, string password)
+    {
+        logger.LogInformation("Authenticating customer with email {Email}", MaskEmail(email));
+
+        var customer = await customerRepository.GetByConditionAsync(c => c.Email == email);
+
+        if (customer != null && customerUtils.CheckPassword(password, customer.Password))
+        {
+            return customerUtils.GenerateToken(customer);
+        }
+        else
+        {
+            throw new WrongCredentialsException("The credentials are not correct.");
         }
     }
 
@@ -105,7 +120,7 @@ public class CustomerService(
             throw new EntityConflictException($"Customer with id {id} is deactivated.");
         }
 
-        if (!CheckPassword(currentPassword, customerDTO.Password))
+        if (!customerUtils.CheckPassword(currentPassword, customerDTO.Password))
         {
             logger.LogWarning("The credentials are not correct for customer {CustomerId}", id);
             throw new WrongCredentialsException("The credentials are not correct.");
@@ -186,11 +201,6 @@ public class CustomerService(
         logger.LogInformation("Successfully activated customer {CustomerId}", id);
     }
 
-    private bool CheckPassword(string passwordToCheck, string passwordHash)
-    {
-        logger.LogDebug("Checking password");
-        return BCrypt.Net.BCrypt.EnhancedVerify(passwordToCheck, passwordHash);
-    }
     private string MaskEmail(string email)
     {
         var atIndex = email.IndexOf('@');

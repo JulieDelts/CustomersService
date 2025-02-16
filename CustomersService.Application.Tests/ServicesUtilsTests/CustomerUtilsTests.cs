@@ -1,10 +1,11 @@
 ﻿
-using Castle.Core.Logging;
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace CustomersService.Application.Tests.ServicesUtilsTests
@@ -13,13 +14,15 @@ namespace CustomersService.Application.Tests.ServicesUtilsTests
     {
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
         private readonly Mock<ILogger<CustomerUtils>> _loggerMock;
+        private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
         private readonly CustomerUtils _sut;
 
         public CustomerUtilsTests()
         {
             _customerRepositoryMock = new();
+            _authConfigOptionsMock = new();
             _loggerMock = new();
-            _sut = new(_customerRepositoryMock.Object, _loggerMock.Object);
+            _sut = new(_customerRepositoryMock.Object, _loggerMock.Object, _authConfigOptionsMock.Object);
         }
 
         [Fact]

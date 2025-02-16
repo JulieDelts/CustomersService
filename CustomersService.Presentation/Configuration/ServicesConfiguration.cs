@@ -2,6 +2,7 @@
 using CustomersService.Presentation.Models.Requests.Validators;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.Extensions.Options;
 
 namespace CustomersService.Presentation.Configuration
 {
@@ -20,6 +21,16 @@ namespace CustomersService.Presentation.Configuration
                     options.Accounts = section.GetSection("Endpoints").GetValue<string>("Accounts") ?? string.Empty;
                     options.Transactions = section.GetSection("Endpoints").GetValue<string>("Transactions") ?? string.Empty;
                 });
+            services.AddOptions<AuthConfigOptions>()
+                .Configure<IConfiguration>((options, configuration) =>
+                {
+                    var section = configuration.GetSection("AuthConfigOptions");
+                    options.Audience = section.GetValue<string>("Audience") ?? string.Empty;
+                    options.Issuer = section.GetValue<string>("Issuer") ?? string.Empty;
+                    options.Key = section.GetValue<string>("Key") ?? string.Empty;
+
+                });
+            services.AddAuth(services.BuildServiceProvider().GetRequiredService<IOptions<AuthConfigOptions>>());
         }
     }
 }
