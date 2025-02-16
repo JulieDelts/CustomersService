@@ -28,27 +28,17 @@ public class Program
         builder.Host.ConfigureCustomLogging();
         var configuration = builder.Configuration;
 
-        builder.Services.AddOptions<TransactionStoreAPIConnectionStrings>()
-        .Configure<IConfiguration>((options, configuration) =>
-        {
-            var section = configuration.GetSection("TransactionStoreAPIConnectionStrings");
-
-            options.BaseUrl = section.GetValue<string>("BaseUrl") ?? string.Empty;
-            options.Accounts = section.GetSection("Endpoints").GetValue<string>("Accounts") ?? string.Empty;
-            options.Transactions = section.GetSection("Endpoints").GetValue<string>("Transactions") ?? string.Empty;
-        });
-
+        builder.Services.ConfigureMappers();
+        builder.Services.AddPersistenceServices(configuration);
+        builder.Services.AddApplicationServices();
+        builder.Services.AddPresentationServices();
+        
         builder.Services.AddHttpClient<CommonHttpClient>((serviceProvider, client) =>
         {
             var options = serviceProvider.GetRequiredService<IOptions<TransactionStoreAPIConnectionStrings>>();
             client.BaseAddress = new Uri(options.Value.BaseUrl);
             client.Timeout = new TimeSpan(0, 5, 0);
         });
-
-        builder.Services.ConfigureMappers();
-        builder.Services.AddPersistenceServices(configuration);
-        builder.Services.AddApplicationServices();
-        builder.Services.AddPresentationServices();
 
         var app = builder.Build();
 
