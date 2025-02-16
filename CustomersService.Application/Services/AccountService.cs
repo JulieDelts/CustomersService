@@ -5,11 +5,13 @@ using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CustomersService.Application.Services;
 
@@ -18,23 +20,12 @@ public class AccountService(
         IMapper mapper,
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
-        ILogger<AccountService> logger) 
+        ILogger<AccountService> logger,
+        CommonHttpClient httpClient,
+        IOptions<TransactionStoreAPIConnectionStrings> options) 
     : IAccountService
 {
-    private readonly CommonHttpClient _httpClient;
-
-    public AccountService(
-        IAccountRepository accountRepository,
-        IMapper mapper,
-        CustomerUtils customerUtils,
-        AccountUtils accountUtils,
-        ILogger<AccountService> logger,
-        ILogger<CommonHttpClient> commonHttpClientLogger,
-        HttpMessageHandler? handler = null): 
-        this(accountRepository, mapper, customerUtils, accountUtils, logger)
-    {
-        _httpClient = new("http://194.147.90.249:9091/api/v1/accounts", commonHttpClientLogger, handler);
-    }
+    private readonly string controllerPath = options.Value.Accounts;
 
     public async Task<Guid> CreateAsync(AccountCreationModel accountToCreate)
     {
@@ -97,7 +88,7 @@ public class AccountService(
 
         var accountDTO = await accountUtils.GetByIdAsync(id);
         var account = mapper.Map<AccountFullInfoModel>(accountDTO);
-        var accountBalanceModel = await _httpClient.SendGetRequestAsync<BalanceResponse>($"/{id}/balance");
+        var accountBalanceModel = await httpClient.SendGetRequestAsync<BalanceResponse>($"{controllerPath}/{id}/balance");
         account.Balance = accountBalanceModel.Balance;
         logger.LogInformation("Successfully retrieved full account info for account {AccountId}", id);
 
@@ -108,7 +99,7 @@ public class AccountService(
     {
         logger.LogInformation("Retrieving transactions for account {AccountId}", id);
 
-        var transactions = await _httpClient.SendGetRequestAsync<List<TransactionResponse>>($"/{id}/transactions");
+        var transactions = await httpClient.SendGetRequestAsync<List<TransactionResponse>>($"{controllerPath}/{id}/transactions");
 
         logger.LogInformation("Successfully retrieved {Count} transactions for account {AccountId}", transactions.Count, id);
         return transactions;
