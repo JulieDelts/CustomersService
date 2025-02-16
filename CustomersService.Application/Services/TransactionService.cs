@@ -3,36 +3,29 @@ using CustomersService.Application.Exceptions;
 using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core;
 using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace CustomersService.Application.Services;
 
 public class TransactionService(
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
-        ILogger<TransactionService> logger)
+        ILogger<TransactionService> logger,
+        CommonHttpClient httpClient,
+        IOptions<TransactionStoreAPIConnectionStrings> options)
     : ITransactionService
 {
-    private readonly CommonHttpClient _httpClient;
-
-    public TransactionService(
-        CustomerUtils customerUtils,
-        AccountUtils accountUtils,
-        ILogger<TransactionService> logger,
-        ILogger<CommonHttpClient> commonHttpClientLogger,
-        HttpMessageHandler? handler = null):
-        this (customerUtils, accountUtils, logger)
-    {
-        _httpClient = new CommonHttpClient("http://194.147.90.249:9091/api/v1/transactions", commonHttpClientLogger,handler);
-    }
+    private readonly string controllerPath = options.Value.Transactions;
 
     public async Task<TransactionResponse> GetByIdAsync(Guid id)
     {
         logger.LogInformation("Retrieving transaction with ID {TransactionId}", id);
-        var transaction = await _httpClient.SendGetRequestAsync<TransactionResponse>($"/{id}");
+        var transaction = await httpClient.SendGetRequestAsync<TransactionResponse>($"{controllerPath}/{id}");
         logger.LogTrace("Retrieved transaction: {@Transaction}", transaction);
         return transaction;
     }
@@ -41,9 +34,9 @@ public class TransactionService(
     {
         string path;
         if (transactionType == TransactionType.Deposit)
-            path = "/deposit";
+            path = $"{controllerPath}/deposit";
         else if (transactionType == TransactionType.Withdrawal)
-            path = "/withdraw";
+            path = $"{controllerPath}/withdraw";
         else throw new EntityConflictException("TransactionType is not correct.");
 
         logger.LogInformation("Creating simple transaction for account {AccountId}", requestModel.AccountId);
@@ -51,7 +44,7 @@ public class TransactionService(
 
         await ValidateSimpleTransactionRequestAsync(requestModel);
 
-        var transactionId = await _httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>(path, requestModel);
+        var transactionId = await httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>(path, requestModel);
         logger.LogInformation("Successfully created transaction with ID {TransactionId}", transactionId);
         return transactionId;
     }
@@ -63,7 +56,7 @@ public class TransactionService(
 
         await ValidateTransferTransactionRequestAsync(requestModel);
 
-        var transactionIds = await _httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>("/transfer", requestModel);
+        var transactionIds = await httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{controllerPath}/transfer", requestModel);
         logger.LogInformation("Successfully created transfer transactions with IDs {TransactionIds}", transactionIds);
         return transactionIds;
     }

@@ -9,12 +9,14 @@ using CustomersService.Application.Models;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Application.Tests.TestCases;
+using CustomersService.Core;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace CustomersService.Application.Tests
@@ -29,6 +31,7 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
         private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
+        private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _optionsMock;
         private readonly AccountService _sut;
 
         public AccountServiceTests()
@@ -38,22 +41,34 @@ namespace CustomersService.Application.Tests
             _messageHandlerMock = new();
             _customerUtilsLoggerMock = new();
             _accountUtilsLoggerMock = new();
-            _commonHttpClientLoggerMock = new();
             _accountServiceLoggerMock = new();
+            _commonHttpClientLoggerMock = new();
+            _optionsMock = new();
+            _optionsMock.Setup(o => o.Value).Returns(new TransactionStoreAPIConnectionStrings
+            {
+                Accounts = "v1/accounts",
+            });
             var config = new MapperConfiguration(
             cfg =>
             {
                 cfg.AddProfile(new AccountApplicationMapperProfile());
             });
             _mapper = new Mapper(config);
+
+            var httpClient = new HttpClient(_messageHandlerMock.Object)
+            {
+                BaseAddress = new Uri("http://194.147.90.249:9091/api")
+            };
+            var commonHttpClient = new CommonHttpClient(httpClient, _commonHttpClientLoggerMock.Object);
+
             _sut = new(
                 _accountRepositoryMock.Object,
                 _mapper,
                 new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _accountServiceLoggerMock.Object,
-                _commonHttpClientLoggerMock.Object,
-                _messageHandlerMock.Object
+                commonHttpClient,
+                _optionsMock.Object
             );
         }
 
@@ -186,7 +201,6 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var apiEndpoint = $"/{accountId}/balance";
             var account = new Account() { Id = accountId };
             var accountBalance = new BalanceResponse()
             {
@@ -216,7 +230,6 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var apiEndpoint = $"/{accountId}/balance";
             var account = new Account() { Id = accountId };
             var message = "Invalid response from the upstream server.";
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
@@ -235,7 +248,6 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var apiEndpoint = $"/{accountId}/balance";
             var account = new Account() { Id = accountId };
             var message = "Request to the service failed.";
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
@@ -266,7 +278,6 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var apiEndpoint = $"/{accountId}/transactions";
             var transactions = new List<TransactionResponse>() 
             { 
                 new TransactionResponse()
@@ -294,7 +305,6 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var apiEndpoint = $"/{accountId}/transactions";
             var message = "Invalid response from the upstream server.";
 
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
@@ -311,7 +321,6 @@ namespace CustomersService.Application.Tests
         {
             //arrange
             var accountId = Guid.NewGuid();
-            var apiEndpoint = $"/{accountId}/transactions";
             var message = "Request to the service failed.";
 
             var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
