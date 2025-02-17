@@ -16,14 +16,18 @@ namespace CustomersService.Presentation.Controllers;
 [Authorize]
 public class AccountController(
         IAccountService accountService,
-        IMapper mapper,
-        ILogger<AccountController> logger) 
+        IMapper mapper) 
     : ControllerBase
 {
     [HttpPost]
     [CustomAuthorize([Role.Regular, Role.VIP])]
     public async Task<ActionResult<Guid>> CreateAsync([FromBody] AccountAddRequest request)
     {
+        var customerId = this.GetCustomerIdFromClaims();
+
+        if (request.CustomerId != customerId)
+            return Forbid();
+
         var accountToCreate = mapper.Map<AccountCreationModel>(request);
         var accountId = await accountService.CreateAsync(accountToCreate);
         return Ok(accountId);
@@ -32,8 +36,8 @@ public class AccountController(
     [HttpGet("{id}")]
     public async Task<ActionResult<AccountFullInfoResponse>> GetByIdAsync([FromRoute] Guid id)
     {
-        var userId = this.GetCustomerIdFromClaims();
-        var account = await accountService.GetFullInfoByIdAsync(id, userId);
+        var customerId = this.GetCustomerIdFromClaims();
+        var account = await accountService.GetFullInfoByIdAsync(id, customerId);
         var response = mapper.Map<AccountFullInfoResponse>(account);
         return Ok(response);
     }
@@ -55,7 +59,7 @@ public class AccountController(
     }
 
     [HttpGet("{id}/transactions")]
-    public async Task<ActionResult<List<TransactionResponse>>> GetTransactionsByAccountId([FromRoute] Guid id)
+    public async Task<ActionResult<List<TransactionResponse>>> GetTransactionsByAccountIdAsync([FromRoute] Guid id)
     {
         var customerId = this.GetCustomerIdFromClaims();
         var transactions = await accountService.GetTransactionsByAccountIdAsync(id, customerId);

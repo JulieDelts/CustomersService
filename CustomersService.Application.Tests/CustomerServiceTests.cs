@@ -14,6 +14,8 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using CustomersService.Core;
+using Castle.Core.Resource;
+using System.Security.Principal;
 
 namespace CustomersService.Application.Tests
 {
@@ -134,6 +136,39 @@ namespace CustomersService.Application.Tests
             Assert.Empty(customer.Accounts);
             Assert.Equal(Role.Unknown, customer.Role);
             Assert.Null(customer.CustomVipDueDate);
+        }
+
+        [Fact]
+        public async Task AuthenticateAsync_InvalidLogin_WrongCredentialsExceptionThrown()
+        {
+            // Arrange
+            var email = "InvalidEmail";
+            var password = "Password";
+            var message = "The credentials are not correct.";
+
+            // Act
+            var exception = await Assert.ThrowsAsync<WrongCredentialsException>(async () => await _sut.AuthenticateAsync(email, password));
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task AuthenticateAsync_InvalidPassword_WrongCredentialsExceptionThrown()
+        {
+            // Arrange
+            var email = "Email";
+            var invalidPassword = "InvalidPassword";
+            var validPassword = "ValidPassword";
+            var validPasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(validPassword);
+            var message = "The credentials are not correct.";
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(t => t.Email == email)).ReturnsAsync(new Customer() { Email = email, Password = validPasswordHash });
+
+            // Act
+            var exception = await Assert.ThrowsAsync<WrongCredentialsException>(async () => await _sut.AuthenticateAsync(email, invalidPassword));
+
+            // Assert
+            Assert.Equal(message, exception.Message);
         }
 
         [Fact]

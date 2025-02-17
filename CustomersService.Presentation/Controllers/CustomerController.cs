@@ -16,11 +16,8 @@ namespace CustomersService.Presentation.Controllers;
 public class CustomerController(
         ICustomerService customerService,
         IAccountService accountService,
-        IMapper mapper,
-        ILogger<CustomerController> logger
-    ) : ControllerBase
+        IMapper mapper) : ControllerBase
 {
-
     [HttpPost, AllowAnonymous]
     public async Task<ActionResult<Guid>> RegisterAsync([FromBody] RegisterCustomerRequest request)
     {
@@ -30,7 +27,7 @@ public class CustomerController(
     }
 
     [HttpPost("login"), AllowAnonymous]
-    public async Task<ActionResult<string>> LoginAsync([FromBody] LoginRequest request)
+    public async Task<ActionResult<string>> AuthenticateAsync([FromBody] LoginRequest request)
     {
         var token = await customerService.AuthenticateAsync(request.Email, request.Password);
         return Ok(token);
@@ -67,7 +64,6 @@ public class CustomerController(
         var response = mapper.Map<List<AccountResponse>>(accounts);
         return Ok(response);
     }
-
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProfileAsync([FromRoute] Guid id, [FromBody] CustomerUpdateRequest request)

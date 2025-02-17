@@ -2,6 +2,7 @@
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
+using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
 using CustomersService.Core.DTOs.Requests;
@@ -51,9 +52,9 @@ public class TransactionService(
     {
         logger.LogInformation("Creating transfer transaction from account {FromAccountId} to account {ToAccountId}", requestModel.FromAccountId, requestModel.ToAccountId);
 
-        await ValidateTransferTransactionRequestAsync(requestModel, customerId);
+        var request = await ValidateTransferTransactionRequestAsync(requestModel, customerId);
 
-        var transactionIds = await httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{controllerPath}/transfer", requestModel);
+        var transactionIds = await httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{controllerPath}/transfer", request);
         logger.LogInformation("Successfully created transfer transactions with IDs {TransactionIds}", transactionIds);
         return transactionIds;
     }
@@ -89,7 +90,7 @@ public class TransactionService(
         }
     }
 
-    private async Task ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
+    private async Task<CreateTransferTransactionRequest> ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
     {
         var fromAccount = await accountUtils.GetByIdAsync(requestModel.FromAccountId);
 
@@ -127,6 +128,11 @@ public class TransactionService(
             logger.LogWarning("Customer with id {CustomerId} is deactivated", customer.Id);
             throw new EntityConflictException($"Customer with id {customer.Id} is deactivated.");
         }
+
+        requestModel.ToCurrency = toAccount.Currency;
+        requestModel.FromCurrency = fromAccount.Currency;
+
+        return requestModel;
     }
 }
 

@@ -41,14 +41,12 @@ namespace CustomersService.Presentation.Tests.TestCases
                 new()
                 {
                     Id = Guid.NewGuid(),
-                    CustomerId = Guid.NewGuid(),
                     Currency = Currency.USD,
                     IsDeactivated = false
                 },
                 new()
                 {
                     Id = Guid.NewGuid(),
-                    CustomerId = Guid.NewGuid(),
                     Currency = Currency.EUR,
                     IsDeactivated = false
                 }

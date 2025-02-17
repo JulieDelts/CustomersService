@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using AutoMapper;
-using Castle.Core.Logging;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Core.DTOs.Responses;
@@ -12,7 +11,6 @@ using CustomersService.Presentation.Models.Responses;
 using CustomersService.Presentation.Tests.TestCases;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace CustomersService.Presentation.Tests;
@@ -22,19 +20,17 @@ public class AccountControllerTests
     private readonly Mock<IAccountService> _accountServiceMock;
     private readonly Mapper _mapper;
     private readonly AccountController _sut;
-    private readonly Mock<ILogger<AccountController>> _loggerMock;
 
     public AccountControllerTests()
     {
         _accountServiceMock = new();
-        _loggerMock = new();
         var config = new MapperConfiguration(
         cfg =>
         {
             cfg.AddProfile(new AccountPresentationMapperProfile());
         });
         _mapper = new Mapper(config);
-        _sut = new AccountController(_accountServiceMock.Object, _mapper, _loggerMock.Object);
+        _sut = new AccountController(_accountServiceMock.Object, _mapper);
     }
 
     [Fact]
@@ -42,8 +38,10 @@ public class AccountControllerTests
     {
         // Arrange
         var expectedStatusCode = HttpStatusCode.OK;
-        var accountRequest = new AccountAddRequest() { CustomerId = Guid.NewGuid(), Currency = Currency.USD };
+        var customerId = Guid.NewGuid();
+        var accountRequest = new AccountAddRequest() { CustomerId = customerId, Currency = Currency.USD };
         var accountModel = new AccountCreationModel() { CustomerId = accountRequest.CustomerId, Currency = accountRequest.Currency };
+        UserClaimsMockSetup.SetUserClaims(_sut, customerId, Role.Regular);
         _accountServiceMock.Setup(t => t.CreateAsync(accountModel)).ReturnsAsync(Guid.NewGuid());
 
         //Act
@@ -142,7 +140,7 @@ public class AccountControllerTests
     }
 
     [Fact]
-    public async Task GetTransactionsByAccountId_GetSuccess()
+    public async Task GetTransactionsByAccountIdAsyncs_GetSuccess()
     {
         // Arrange
         var expectedStatusCode = HttpStatusCode.OK;
@@ -153,7 +151,7 @@ public class AccountControllerTests
         _accountServiceMock.Setup(t => t.GetTransactionsByAccountIdAsync(id, customerId)).ReturnsAsync(transactions);
 
         //Act
-        var result = await _sut.GetTransactionsByAccountId(id);
+        var result = await _sut.GetTransactionsByAccountIdAsync(id);
         var statusCode = (result.Result as ObjectResult).StatusCode;
 
         //Assert

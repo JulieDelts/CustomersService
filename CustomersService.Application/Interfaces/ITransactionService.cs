@@ -1,4 +1,5 @@
-﻿using CustomersService.Core.DTOs.Requests;
+﻿using CustomersService.Application.Models;
+using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 

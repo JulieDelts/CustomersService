@@ -1,8 +1,10 @@
-﻿using CustomersService.Application.Interfaces;
+﻿using AutoMapper;
+using CustomersService.Application.Interfaces;
 using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Presentation.Configuration;
+using CustomersService.Presentation.Models.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,29 +15,32 @@ namespace CustomersService.Presentation.Controllers
     [Authorize]
     public class TransactionController(
         ITransactionService transactionService,
-        ILogger<TransactionController> logger) : ControllerBase
+        IMapper mapper) : ControllerBase
     {
         [HttpPost("deposit")]
-        public async Task<ActionResult<Guid>> CreateDepositTransactionAsync([FromBody] CreateTransactionRequest request)
+        public async Task<ActionResult<Guid>> CreateDepositTransactionAsync([FromBody] TransactionCreateRequest request)
         {
             var customerId = this.GetCustomerIdFromClaims();
-            var transactionId = await transactionService.CreateSimpleTransactionAsync(request, customerId, TransactionType.Deposit);
+            var transactionModel = mapper.Map<CreateTransactionRequest>(request);
+            var transactionId = await transactionService.CreateSimpleTransactionAsync(transactionModel, customerId, TransactionType.Deposit);
             return Ok(transactionId);
         }
 
         [HttpPost("withdraw")]
-        public async Task<ActionResult<Guid>> CreateWithdrawTransactionAsync([FromBody] CreateTransactionRequest request)
+        public async Task<ActionResult<Guid>> CreateWithdrawTransactionAsync([FromBody] TransactionCreateRequest request)
         {
             var customerId = this.GetCustomerIdFromClaims();
-            var transactionId = await transactionService.CreateSimpleTransactionAsync(request, customerId, TransactionType.Withdrawal);
+            var transactionModel = mapper.Map<CreateTransactionRequest>(request);
+            var transactionId = await transactionService.CreateSimpleTransactionAsync(transactionModel, customerId, TransactionType.Withdrawal);
             return Ok(transactionId);
         }
 
         [HttpPost("transfer")]
-        public async Task<ActionResult<List<Guid>>> CreateTransferTransactionAsync([FromBody] CreateTransferTransactionRequest request)
+        public async Task<ActionResult<List<Guid>>> CreateTransferTransactionAsync([FromBody] TransferTransactionCreateRequest request)
         {
             var customerId = this.GetCustomerIdFromClaims();
-            var transactionIds = await transactionService.CreateTransferTransactionAsync(request, customerId);
+            var transactionModel = mapper.Map<CreateTransferTransactionRequest>(request);
+            var transactionIds = await transactionService.CreateTransferTransactionAsync(transactionModel, customerId);
             return Ok(transactionIds);
         }
 

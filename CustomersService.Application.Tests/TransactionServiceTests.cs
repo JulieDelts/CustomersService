@@ -3,6 +3,7 @@ using System.Net;
 using System.Text.Json;
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Integrations;
+using CustomersService.Application.Models;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
@@ -298,9 +299,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var idList = new List<Guid>() { Guid.NewGuid(), Guid.NewGuid() };
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.EUR, ToCurrency = Currency.RUB };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.USD };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
@@ -324,9 +325,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = $"Account with id {toAccountId} is deactivated.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.EUR, ToCurrency = Currency.RUB };
-            var fromAccount = new Account() { Id = fromAccountId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, Currency = request.ToCurrency, IsDeactivated = true };
+            var fromAccount = new Account() { Id = fromAccountId, Currency = Currency.EUR };
+            var toAccount = new Account() { Id = toAccountId, Currency = Currency.RUB, IsDeactivated = true };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
 
@@ -345,9 +346,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = "Accounts must belong to the same customer.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.EUR, ToCurrency = Currency.RUB };
-            var fromAccount = new Account() { Id = fromAccountId, Currency = request.FromCurrency, CustomerId = Guid.NewGuid() };
-            var toAccount = new Account() { Id = toAccountId, Currency = request.ToCurrency, CustomerId = Guid.NewGuid() };
+            var fromAccount = new Account() { Id = fromAccountId, Currency = Currency.EUR, CustomerId = Guid.NewGuid() };
+            var toAccount = new Account() { Id = toAccountId, Currency = Currency.RUB, CustomerId = Guid.NewGuid() };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
 
@@ -367,9 +368,9 @@ namespace CustomersService.Application.Tests
             var customerId = Guid.NewGuid();
             var customerClaimId = Guid.NewGuid();
             var message = "Customers are only allowed to create transactions for their own accounts.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.EUR, ToCurrency = Currency.RUB };
-            var fromAccount = new Account() { Id = fromAccountId, Currency = request.FromCurrency, CustomerId = customerId };
-            var toAccount = new Account() { Id = toAccountId, Currency = request.ToCurrency, CustomerId = customerId };
+            var fromAccount = new Account() { Id = fromAccountId, Currency = Currency.EUR, CustomerId = customerId };
+            var toAccount = new Account() { Id = toAccountId, Currency = Currency.RUB, CustomerId = customerId };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
 
@@ -388,9 +389,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = $"Transfer from deactivated accounts is allowed only to the account with currency {Currency.RUB}.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.JPY, ToCurrency = Currency.EUR };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency, IsDeactivated = true };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.JPY, IsDeactivated = true };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.EUR };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
@@ -411,9 +412,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = $"Customer with id {customerId} is deactivated.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.JPY, ToCurrency = Currency.EUR };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.EUR };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId, IsDeactivated = true };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
@@ -434,9 +435,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = "Invalid response from the upstream server.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.JPY, ToCurrency = Currency.EUR };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.EUR };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
@@ -459,9 +460,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = "Request to the service failed.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.JPY, ToCurrency = Currency.EUR };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.EUR };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);

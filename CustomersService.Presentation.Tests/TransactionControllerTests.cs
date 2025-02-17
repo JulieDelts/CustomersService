@@ -1,12 +1,16 @@
 ﻿
 using System.Net;
+using AutoMapper;
 using CustomersService.Application.Interfaces;
 using CustomersService.Core.DTOs.Requests;
 using CustomersService.Core.DTOs.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Presentation.Controllers;
+using CustomersService.Presentation.Mappings;
+using CustomersService.Presentation.Models.Requests;
+using CustomersService.Presentation.Tests.TestCases;
+using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace CustomersService.Presentation.Tests
@@ -14,14 +18,19 @@ namespace CustomersService.Presentation.Tests
     public class TransactionControllerTests
     {
         private readonly Mock<ITransactionService> _transactionServiceMock;
+        private readonly Mapper _mapper;
         private readonly TransactionController _sut;
-        private readonly Mock<ILogger<TransactionController>> _loggerMock;
 
         public TransactionControllerTests()
         {
             _transactionServiceMock = new();
-            _loggerMock = new();
-            _sut = new TransactionController(_transactionServiceMock.Object, _loggerMock.Object);
+            var config = new MapperConfiguration(
+            cfg =>
+            {
+                cfg.AddProfile(new TransactionPresentationMapperProfile());
+            });
+            _mapper = new Mapper(config);
+            _sut = new TransactionController(_transactionServiceMock.Object, _mapper);
         }
 
         [Fact]
@@ -54,11 +63,12 @@ namespace CustomersService.Presentation.Tests
             var customerId = Guid.NewGuid();
             var transactionType = TransactionType.Deposit;
             var transaction = new CreateTransactionRequest() { AccountId = accountId, Amount = 100 };
+            var transactionModel = new TransactionCreateRequest() { AccountId = accountId, Amount = 100 };
             UserClaimsMockSetup.SetUserClaims(_sut, customerId, Role.Regular);
             _transactionServiceMock.Setup(t => t.CreateSimpleTransactionAsync(transaction, customerId, transactionType)).ReturnsAsync(Guid.NewGuid());
 
             //Act
-            var result = await _sut.CreateDepositTransactionAsync(transaction);
+            var result = await _sut.CreateDepositTransactionAsync(transactionModel);
             var statusCode = (result.Result as ObjectResult).StatusCode;
 
             //Assert
@@ -79,11 +89,12 @@ namespace CustomersService.Presentation.Tests
             var customerId = Guid.NewGuid();
             var transactionType = TransactionType.Withdrawal;
             var transaction = new CreateTransactionRequest() { AccountId = accountId, Amount = 100 };
+            var transactionModel = new TransactionCreateRequest() { AccountId = accountId, Amount = 100 };
             UserClaimsMockSetup.SetUserClaims(_sut, customerId, Role.Regular);
             _transactionServiceMock.Setup(t => t.CreateSimpleTransactionAsync(transaction, customerId, transactionType)).ReturnsAsync(Guid.NewGuid());
 
             //Act
-            var result = await _sut.CreateWithdrawTransactionAsync(transaction);
+            var result = await _sut.CreateWithdrawTransactionAsync(transactionModel);
             var statusCode = (result.Result as ObjectResult).StatusCode;
 
             //Assert
@@ -93,6 +104,17 @@ namespace CustomersService.Presentation.Tests
                t.CreateSimpleTransactionAsync(It.Is<CreateTransactionRequest>(t =>
                t.AccountId == transaction.AccountId && t.Amount == transaction.Amount), customerId, It.Is<TransactionType>(t => t == TransactionType.Withdrawal)),
                Times.Once);
+        } 
+        
+        [Theory]
+        [MemberData(nameof(TransactionControllerTestCases.SimpleTransaction), MemberType = typeof(TransactionControllerTestCases))]
+        public void CreateTransactionAsync_ValidModel_MappingSuccess(TransactionCreateRequest transactionCreateRequest)
+        {
+            //Act
+            var transactionRequestModel = _mapper.Map<CreateTransactionRequest>(transactionCreateRequest);
+
+            //Assert
+            transactionCreateRequest.Should().BeEquivalentTo(transactionRequestModel);
         }
 
         [Fact]
@@ -103,10 +125,10 @@ namespace CustomersService.Presentation.Tests
             var customerId = Guid.NewGuid();
             var fromAccountId = Guid.NewGuid();
             var toAccountId = Guid.NewGuid();
-            var transaction = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, Amount = 100 };
+            var transaction = new TransferTransactionCreateRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, Amount = 100 };
+            var transactionModel = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, Amount = 100 };
             UserClaimsMockSetup.SetUserClaims(_sut, customerId, Role.Regular);
-            _transactionServiceMock.Setup(t => t.CreateTransferTransactionAsync(transaction, customerId)).ReturnsAsync(new List<Guid>() { Guid.NewGuid(), Guid.NewGuid() });
-
+            _transactionServiceMock.Setup(t => t.CreateTransferTransactionAsync(transactionModel, customerId)).ReturnsAsync(new List<Guid>() { Guid.NewGuid(), Guid.NewGuid() });
 
             //Act
             var result = await _sut.CreateTransferTransactionAsync(transaction);
@@ -119,6 +141,17 @@ namespace CustomersService.Presentation.Tests
                t.CreateTransferTransactionAsync(It.Is<CreateTransferTransactionRequest>(t => t.FromAccountId == transaction.FromAccountId 
                && t.ToAccountId == transaction.ToAccountId && t.Amount == transaction.Amount), customerId),
                Times.Once);
+        }
+
+        [Theory]
+        [MemberData(nameof(TransactionControllerTestCases.TransferTransaction), MemberType = typeof(TransactionControllerTestCases))]
+        public void CreateTransferTransactionAsync_ValidModel_MappingSuccess(TransferTransactionCreateRequest transactionCreateRequest)
+        {
+            //Act
+            var transactionRequestModel = _mapper.Map<CreateTransferTransactionRequest>(transactionCreateRequest);
+
+            //Assert
+            transactionCreateRequest.Should().BeEquivalentTo(transactionRequestModel, options => options.ExcludingMissingMembers());
         }
     }
 }

@@ -21,7 +21,6 @@ namespace CustomersService.Persistence.Repositories
         public async Task ActivateAsync(List<Account> accounts)
         {
             logger.LogDebug("Activating multiple accounts");
-            logger.LogTrace("Accounts to activate: {@Accounts}", accounts);
 
             foreach (var account in accounts)
             {

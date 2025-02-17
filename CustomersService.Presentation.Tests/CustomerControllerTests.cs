@@ -11,7 +11,6 @@ using CustomersService.Presentation.Models.Responses;
 using CustomersService.Presentation.Tests.TestCases;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace CustomersService.Presentation.Tests;
@@ -20,7 +19,6 @@ public class CustomerControllerTests
 {
     private readonly Mock<ICustomerService> _customerServiceMock;
     private readonly Mock<IAccountService> _accountServiceMock;
-    private readonly Mock<ILogger<CustomerController>> _loggerMock;
     private readonly Mapper _mapper;
     private readonly CustomerController _sut;
 
@@ -28,7 +26,6 @@ public class CustomerControllerTests
     {
         _customerServiceMock = new();
         _accountServiceMock = new();
-        _loggerMock = new();
         var config = new MapperConfiguration(
         cfg =>
         {
@@ -36,7 +33,7 @@ public class CustomerControllerTests
             cfg.AddProfile(new AccountPresentationMapperProfile());
         });
         _mapper = new Mapper(config);
-        _sut = new(_customerServiceMock.Object,_accountServiceMock.Object, _mapper, _loggerMock.Object);
+        _sut = new(_customerServiceMock.Object,_accountServiceMock.Object, _mapper);
     }
 
     [Fact]
@@ -69,6 +66,26 @@ public class CustomerControllerTests
 
         //Assert
         customerModel.Should().BeEquivalentTo(customerRegisterRequest);
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_ValidModel_AuthenticateSuccess()
+    {
+        // Arrange
+        var expectedStatusCode = HttpStatusCode.OK;
+        var customer = new LoginRequest() { Email = "test@gmail.com", Password = "qweqweqwe" };
+        _customerServiceMock.Setup(t => t.AuthenticateAsync(customer.Email, customer.Password)).ReturnsAsync("token");
+
+        //Act
+        var result = await _sut.AuthenticateAsync(customer);
+        var statusCode = (result.Result as ObjectResult).StatusCode;
+
+        //Assert
+        Assert.IsType<ActionResult<string>>(result);
+        Assert.Equal((int)expectedStatusCode, statusCode);
+        _customerServiceMock.Verify(t =>
+           t.AuthenticateAsync(customer.Email, customer.Password),
+           Times.Once);
     }
 
     [Fact]
