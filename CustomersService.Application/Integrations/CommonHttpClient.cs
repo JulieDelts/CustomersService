@@ -3,10 +3,11 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace CustomersService.Application.Integrations;
-public class CommonHttpClient
+public class CommonHttpClient: ICommonHttpClient
 {
     private readonly HttpClient _httpClient;
     private JsonSerializerOptions _serializerOptions;

@@ -9,12 +9,14 @@ namespace CustomersService.Presentation.Configuration
     {
         public static void AddPresentationServices(this IServiceCollection services)
         {
+            services.AddControllers();
+            services.AddSwaggerGen();
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
             services.AddOptions<TransactionStoreAPIConnectionStrings>()
                 .Configure<IConfiguration>((options, configuration) =>
                 {
-                    var section = configuration.GetSection("TransactionStoreAPIConnectionStrings");
+                    var section = configuration.GetSection("TransactionStoreApiConnectionStrings");
 
                     options.BaseUrl = section.GetValue<string>("BaseUrl") ?? string.Empty;
                     options.Accounts = section.GetSection("Endpoints").GetValue<string>("Accounts") ?? string.Empty;

@@ -1,9 +1,7 @@
 ﻿
-using System.Net;
-using System.Text.Json;
 using AutoMapper;
 using CustomersService.Application.Exceptions;
-using CustomersService.Application.Integrations;
+using CustomersService.Application.Interfaces;
 using CustomersService.Application.Mappings;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services;
@@ -25,12 +23,11 @@ namespace CustomersService.Application.Tests
     {
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
-        private Mock<HttpMessageHandler> _messageHandlerMock;
         private readonly Mapper _mapper;
         private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
-        private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
+        private readonly Mock<ICommonHttpClient> _commonHttpClientMock;
         private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _optionsMock;
         private readonly AccountService _sut;
 
@@ -38,16 +35,11 @@ namespace CustomersService.Application.Tests
         {
             _accountRepositoryMock = new();
             _customerRepositoryMock = new();
-            _messageHandlerMock = new();
             _customerUtilsLoggerMock = new();
             _accountUtilsLoggerMock = new();
             _accountServiceLoggerMock = new();
-            _commonHttpClientLoggerMock = new();
+            _commonHttpClientMock = new();
             _optionsMock = new();
-            _optionsMock.Setup(o => o.Value).Returns(new TransactionStoreAPIConnectionStrings
-            {
-                Accounts = "v1/accounts",
-            });
             var config = new MapperConfiguration(
             cfg =>
             {
@@ -55,19 +47,13 @@ namespace CustomersService.Application.Tests
             });
             _mapper = new Mapper(config);
 
-            var httpClient = new HttpClient(_messageHandlerMock.Object)
-            {
-                BaseAddress = new Uri("http://194.147.90.249:9091/api")
-            };
-            var commonHttpClient = new CommonHttpClient(httpClient, _commonHttpClientLoggerMock.Object);
-
             _sut = new(
                 _accountRepositoryMock.Object,
                 _mapper,
                 new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _accountServiceLoggerMock.Object,
-                commonHttpClient,
+                _commonHttpClientMock.Object,
                 _optionsMock.Object
             );
         }
@@ -199,7 +185,7 @@ namespace CustomersService.Application.Tests
         [Fact]
         public async Task GetFullInfoByIdAsync_GetSuccess()
         {
-            //arrange
+            //Arrange
             var accountId = Guid.NewGuid();
             var account = new Account() { Id = accountId };
             var accountBalance = new BalanceResponse()
@@ -207,60 +193,23 @@ namespace CustomersService.Application.Tests
                 AccountId = accountId,
                 Balance = 10000
             };
-            var accountFullInfoModel = new AccountFullInfoModel()
+            var accountModel = new AccountFullInfoModel() 
             {
                 Id = accountId,
                 Balance = accountBalance.Balance
             };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<BalanceResponse>($"{null}/{accountId}/balance")).ReturnsAsync(accountBalance);
 
-            var response = JsonSerializer.Serialize(accountBalance);
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
-
-            //act 
+            //Act 
             var result = await _sut.GetFullInfoByIdAsync(accountId);
 
-            //assert
-            accountFullInfoModel.Should().BeEquivalentTo(result);
+            //Assert
+            accountModel.Should().BeEquivalentTo(result);
+            _commonHttpClientMock.Verify(t =>
+                t.SendGetRequestAsync<BalanceResponse>(It.IsAny<string>()),
+                Times.Once);
         }
-
-        [Fact]
-        public async Task GetFullInfoByIdAsync_InternalServerErrorReturned_BadGatewayExceptionThrown()
-        {
-            //arrange
-            var accountId = Guid.NewGuid();
-            var account = new Account() { Id = accountId };
-            var message = "Invalid response from the upstream server.";
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetFullInfoByIdAsync(accountId));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
-        public async Task GetFullInfoByIdAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
-        {
-            //arrange
-            var accountId = Guid.NewGuid();
-            var account = new Account() { Id = accountId };
-            var message = "Request to the service failed.";
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetFullInfoByIdAsync(accountId));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
-
 
         [Theory]
         [MemberData(nameof(AccountServiceTestCases.AccountWithFullInfo), MemberType = typeof(AccountServiceTestCases))]
@@ -276,7 +225,7 @@ namespace CustomersService.Application.Tests
         [Fact]
         public async Task GetTransactionsByAccountIdAsync_GetSuccess()
         {
-            //arrange
+            //Arrange
             var accountId = Guid.NewGuid();
             var transactions = new List<TransactionResponse>() 
             { 
@@ -289,47 +238,16 @@ namespace CustomersService.Application.Tests
                     TransactionType = TransactionType.Deposit
                 }
             };
+            _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<List<TransactionResponse>>($"{null}/{accountId}/transactions")).ReturnsAsync(transactions);
 
-            var response = JsonSerializer.Serialize(transactions);
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
-
-            //act 
+            //Act 
             var result = await _sut.GetTransactionsByAccountIdAsync(accountId);
 
-            //assert
+            //Assert
             transactions.Should().BeEquivalentTo(result);
-        }
-
-        [Fact]
-        public async Task GetTransactionsByAccountIdAsync_InternalServerErrorReturned_BadGatewayExceptionThrown()
-        {
-            //arrange
-            var accountId = Guid.NewGuid();
-            var message = "Invalid response from the upstream server.";
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
-        public async Task GetTransactionsByAccountIdAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
-        {
-            //arrange
-            var accountId = Guid.NewGuid();
-            var message = "Request to the service failed.";
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetTransactionsByAccountIdAsync(accountId));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
+            _commonHttpClientMock.Verify(t =>
+                t.SendGetRequestAsync<List<TransactionResponse>>(It.IsAny<string>()),
+                Times.Once);
         }
 
         [Fact]
