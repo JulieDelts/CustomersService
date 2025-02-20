@@ -1,8 +1,10 @@
-﻿using CustomersService.Application.Interfaces;
-using CustomersService.Application.Mappings;
+﻿using CustomersService.Application.Integrations;
+using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
+using CustomersService.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace CustomersService.Application.Configuration
 {
@@ -15,6 +17,12 @@ namespace CustomersService.Application.Configuration
             services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<AccountUtils>();
             services.AddScoped<CustomerUtils>();
+            services.AddHttpClient<ICommonHttpClient, CommonHttpClient>((serviceProvider, client) =>
+             {
+                var options = serviceProvider.GetRequiredService<IOptions<TransactionStoreAPIConnectionStrings>>();
+                client.BaseAddress = new Uri(options.Value.BaseUrl);
+                client.Timeout = new TimeSpan(0, 5, 0);
+             });
         }
     }
 }

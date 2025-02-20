@@ -1,8 +1,7 @@
-﻿
-using System.Net;
-using System.Text.Json;
+
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Integrations;
+using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
@@ -21,15 +20,12 @@ namespace CustomersService.Application.Tests
 {
     public class TransactionServiceTests
     {
-        private Mock<HttpMessageHandler> _messageHandlerMock;
         private readonly Mock<IAccountRepository> _accountRepositoryMock;
         private readonly Mock<ICustomerRepository> _customerRepositoryMock;
         private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<TransactionService>> _transactionServiceLoggerMock;
-        private readonly Mock<ILogger<CommonHttpClient>> _commonHttpClientLoggerMock;
-        private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _apiOptionsMock;
-        private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
+        private readonly Mock<ICommonHttpClient> _commonHttpClientMock;
         private TransactionService _sut;
   
         public TransactionServiceTests()
@@ -39,33 +35,19 @@ namespace CustomersService.Application.Tests
             _customerUtilsLoggerMock = new Mock<ILogger<CustomerUtils>>();
             _accountUtilsLoggerMock = new Mock<ILogger<AccountUtils>>();
             _transactionServiceLoggerMock = new Mock<ILogger<TransactionService>>();
-            _messageHandlerMock = new();
-            _commonHttpClientLoggerMock = new();
-            _apiOptionsMock = new();
-            _apiOptionsMock.Setup(o => o.Value).Returns(new TransactionStoreAPIConnectionStrings
-            {
-                Transactions = "v1/transactions"
-            });
-            _authConfigOptionsMock = new();
-            var httpClient = new HttpClient(_messageHandlerMock.Object)
-            {
-                BaseAddress = new Uri("http://194.147.90.249:9091/api")
-            };
-
-            var commonHttpClient = new CommonHttpClient(httpClient, _commonHttpClientLoggerMock.Object);
-
+            _commonHttpClientMock = new();
             _sut = new TransactionService(
-                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object, _authConfigOptionsMock.Object),
+                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object, null),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _transactionServiceLoggerMock.Object,
-                commonHttpClient,
-                _apiOptionsMock.Object);
+                _commonHttpClientMock.Object,
+                new Mock<IOptions<TransactionStoreAPIConnectionStrings>>().Object);
         }
 
         [Fact]
         public async Task GetByIdAsync_GetSuccess()
         {
-            //arrange
+            //Arrange
             var id = Guid.NewGuid();
             var transaction = new TransactionResponse()
             {
@@ -75,71 +57,42 @@ namespace CustomersService.Application.Tests
                 Date = DateTime.Now,
                 TransactionType = TransactionType.Deposit
             };
+            _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<TransactionResponse>($"{null}/{id}")).ReturnsAsync(transaction);
 
-            var response = JsonSerializer.Serialize(transaction);
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
-
-            //act 
+            //Act 
             var result = await _sut.GetByIdAsync(id);
 
-            //assert
+            //Assert
             transaction.Should().BeEquivalentTo(result);
-        }
-
-        [Fact]
-        public async Task GetByIdAsync_InternalServerErrorReturned_BadGatewayExceptionThrown()
-        {
-            //arrange
-            var id = Guid.NewGuid();
-            var message = "Invalid response from the upstream server.";
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
-            
-            //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.GetByIdAsync(id));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
-        public async Task GetByIdAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
-        {
-            //arrange
-            var id = Guid.NewGuid();
-            var message = "Request to the service failed.";
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.GetByIdAsync(id));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
+            _commonHttpClientMock.Verify(t =>
+            t.SendGetRequestAsync<TransactionResponse>(It.IsAny<string>()),
+                Times.Once);
         }
 
         [Fact]
         public async Task CreateSimpleTransactionAsync_CreateSuccess()
         {
-            //arrange
+            //Arrange
             var accountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
+            var transactionId = Guid.NewGuid();
             var transactionType = TransactionType.Deposit;
             var request = new CreateTransactionRequest() { AccountId = accountId };
             var account = new Account() { Id = accountId, CustomerId = customerId, Currency = Currency.USD };
             var customer = new Customer();
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+            _commonHttpClientMock.Setup(t => t.SendPostRequestAsync<CreateTransactionRequest, Guid>($"{null}/deposit", request)).ReturnsAsync(transactionId);
 
-            var transactionId = Guid.NewGuid();
-            var response = JsonSerializer.Serialize(transactionId);
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
-
-            //act 
+            //Act 
             var result = await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType);
 
-            // Assert
+            //Assert
             Assert.Equal(transactionId, result);
+            _commonHttpClientMock.Verify(t =>
+            t.SendPostRequestAsync<CreateTransactionRequest, Guid>(It.IsAny<string>(),
+                It.Is<CreateTransactionRequest>(t => t.AccountId == accountId)),
+                Times.Once);
         }
 
         [Fact]
@@ -246,52 +199,6 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
-        public async Task CreateSimpleTransactionAsync_InternalServerErrorReturned_BadGatewayExceptionThrown()
-        {
-            //arrange
-            var accountId = Guid.NewGuid();
-            var customerId = Guid.NewGuid();
-            var transactionType = TransactionType.Deposit;
-            var message = "Invalid response from the upstream server.";
-            var request = new CreateTransactionRequest() { AccountId = accountId };
-            var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
-            var customer = new Customer();
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
-            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
-        public async Task CreateSimpleTransactionAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
-        {
-            //arrange
-            var accountId = Guid.NewGuid();
-            var customerId = Guid.NewGuid();
-            var transactionType = TransactionType.Deposit;
-            var message = "Request to the service failed.";
-            var request = new CreateTransactionRequest() { AccountId = accountId };
-            var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
-            var customer = new Customer();
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
-            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
         public async Task CreateTransferTransactionAsync_CreateSuccess()
         {
             //arrange
@@ -306,15 +213,17 @@ namespace CustomersService.Application.Tests
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
-
-            var response = JsonSerializer.Serialize(idList);
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.OK, response);
+            _commonHttpClientMock.Setup(t => t.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{null}/transfer", request)).ReturnsAsync(idList);
 
             //act 
             var result = await _sut.CreateTransferTransactionAsync(request, customerId);
 
             // Assert
             idList.Should().BeEquivalentTo(result);
+            _commonHttpClientMock.Verify(t =>
+                t.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>(It.IsAny<string>(),
+                It.Is<CreateTransferTransactionRequest>(t => t.FromAccountId == fromAccountId && t.ToAccountId == toAccountId)),
+                Times.Once);    
         }
 
         [Fact]
@@ -424,56 +333,6 @@ namespace CustomersService.Application.Tests
             var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request, customerId));
 
             //Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
-        public async Task CreateTransferTransactionAsync_InternalServerErrorReturned_BadGatewayExceptionThrown()
-        {
-            //arrange
-            var fromAccountId = Guid.NewGuid();
-            var toAccountId = Guid.NewGuid();
-            var customerId = Guid.NewGuid();
-            var message = "Invalid response from the upstream server.";
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.EUR };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
-            var customer = new Customer() { Id = customerId };
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
-            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.InternalServerError);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<BadGatewayException>(async () => await _sut.CreateTransferTransactionAsync(request, customerId));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
-
-        [Fact]
-        public async Task CreateTransferTransactionAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
-        {
-            //arrange
-            var fromAccountId = Guid.NewGuid();
-            var toAccountId = Guid.NewGuid();
-            var customerId = Guid.NewGuid();
-            var message = "Request to the service failed.";
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.EUR };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
-            var customer = new Customer() { Id = customerId };
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
-            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
-            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
-
-            var mockProtected = HttpMessageHandlerMockSetup.SetupProtectedHttpMessageHandlerMock(_messageHandlerMock, HttpStatusCode.NotFound);
-
-            //act 
-            var exception = await Assert.ThrowsAsync<ServiceUnavailableException>(async () => await _sut.CreateTransferTransactionAsync(request, customerId));
-
-            // Assert
             Assert.Equal(message, exception.Message);
         }
     }

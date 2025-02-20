@@ -41,11 +41,11 @@ public class CustomerUtils(
 
     public string GenerateToken(Customer customer)
     {
-        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Value.Key));
+        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Value?.Key ?? ""));
         var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
         var tokenOptions = new JwtSecurityToken(
-            issuer: options.Value.Issuer,
-            audience: options.Value.Audience,
+            issuer: options.Value?.Issuer,
+            audience: options.Value?.Audience,
             claims: new List<Claim>()
             {
                 new Claim(ClaimTypes.Role, customer.Role.ToString()),

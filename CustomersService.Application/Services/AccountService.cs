@@ -1,7 +1,6 @@
 ﻿
 using AutoMapper;
 using CustomersService.Application.Exceptions;
-using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
@@ -21,11 +20,11 @@ public class AccountService(
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
         ILogger<AccountService> logger,
-        CommonHttpClient httpClient,
+        ICommonHttpClient httpClient,
         IOptions<TransactionStoreAPIConnectionStrings> options) 
     : IAccountService
 {
-    private readonly string controllerPath = options.Value.Accounts;
+    private readonly string controllerPath = options.Value?.Accounts;
 
     public async Task<Guid> CreateAsync(AccountCreationModel accountToCreate)
     {

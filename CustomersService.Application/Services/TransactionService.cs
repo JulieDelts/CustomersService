@@ -1,6 +1,5 @@
 
 using CustomersService.Application.Exceptions;
-using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
@@ -17,11 +16,11 @@ public class TransactionService(
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
         ILogger<TransactionService> logger,
-        CommonHttpClient httpClient,
+        ICommonHttpClient httpClient,
         IOptions<TransactionStoreAPIConnectionStrings> options)
     : ITransactionService
 {
-    private readonly string controllerPath = options.Value.Transactions;
+    private readonly string controllerPath = options.Value?.Transactions;
 
     public async Task<TransactionResponse> GetByIdAsync(Guid id)
     {
