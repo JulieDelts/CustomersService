@@ -3,26 +3,20 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
 namespace CustomersService.Application.Integrations;
-public class CommonHttpClient
+public class CommonHttpClient: ICommonHttpClient
 {
-    private readonly HttpClient _httpClient = new();
+    private readonly HttpClient _httpClient;
     private JsonSerializerOptions _serializerOptions;
     private readonly ILogger<CommonHttpClient> _logger;
 
-    public CommonHttpClient(string baseUrl, ILogger<CommonHttpClient> logger, HttpMessageHandler? handler = null)
+    public CommonHttpClient(HttpClient client, ILogger<CommonHttpClient> logger)
     {
         _logger = logger;
-
-        if (handler != null)
-        {
-            _httpClient = new HttpClient(handler);
-        }
-
-        _httpClient.BaseAddress = new Uri(baseUrl);
-        _httpClient.Timeout = new TimeSpan(0, 5, 0);
+        _httpClient = client;
         _serializerOptions = new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
     }
 

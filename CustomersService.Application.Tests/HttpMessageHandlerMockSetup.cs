@@ -7,7 +7,7 @@ namespace CustomersService.Application.Tests
 {
     public static class HttpMessageHandlerMockSetup
     {
-        public static IProtectedMock<HttpMessageHandler> SetupProtectedHttpMessageHandlerMock(Mock<HttpMessageHandler> messageHandlerMock, HttpStatusCode httpStatusCode, string? response = null)
+        public static void SetupProtectedHttpMessageHandlerMock(Mock<HttpMessageHandler> messageHandlerMock, HttpStatusCode httpStatusCode, string? response = null)
         {
             var responseMessage = new HttpResponseMessage { StatusCode = httpStatusCode };
 
@@ -21,8 +21,6 @@ namespace CustomersService.Application.Tests
                     ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(responseMessage);
-
-            return mockProtected;
         }
     }
 }

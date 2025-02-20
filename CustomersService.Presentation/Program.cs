@@ -1,7 +1,6 @@
 using CustomersService.Application.Configuration;
 using CustomersService.Persistence.Configuration;
 using CustomersService.Presentation.Configuration;
-using Serilog;
 
 namespace CustomersService.Presentation;
 
@@ -12,17 +11,13 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddControllers();
-
         builder.Configuration
        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
-       .AddJsonFile("appsettings.secrets.json", optional: true, reloadOnChange: true)
        .AddCommandLine(args)
        .AddEnvironmentVariables()
        .Build();
 
-        builder.Services.AddSwaggerGen();
         builder.Host.ConfigureCustomLogging();
         var configuration = builder.Configuration;
 
