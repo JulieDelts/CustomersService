@@ -16,7 +16,6 @@ public class CustomerRepository(
     public async Task UpdateProfileAsync(Customer customer, Customer customerUpdate)
     {
         logger.LogDebug("Updating profile for customer {CustomerId}", customer.Id);
-        logger.LogTrace("Customer update data: {@CustomerUpdate}", customerUpdate);
 
         customer.FirstName = customerUpdate.FirstName;
         customer.LastName = customerUpdate.LastName;
@@ -40,7 +39,6 @@ public class CustomerRepository(
     public async Task SetManualVipAsync(Customer customer, DateTime vipExpirationDate)
     {
         logger.LogDebug("Setting VIP status for customer {CustomerId}", customer.Id);
-        logger.LogTrace("VIP expiration date: {VipExpirationDate}", vipExpirationDate);
 
         customer.Role = Role.VIP;
         customer.CustomVipDueDate = vipExpirationDate;
@@ -52,7 +50,6 @@ public class CustomerRepository(
     public async Task BatchUpdateRoleAsync(List<Guid> customerIds)
     {
         logger.LogDebug("Batch updating roles for customers");
-        logger.LogTrace("Customers with roles data: {@CustomerIds}", customerIds);
 
         var vipAccounts = new List<int>() 
         { (int)Currency.JPY, (int)Currency.CNY, (int)Currency.RSD, (int)Currency.BGN, (int)Currency.ARS };

@@ -5,10 +5,10 @@ using CustomersService.Application.Integrations;
 using Microsoft.Extensions.Logging;
 using Moq;
 using CustomersService.Persistence.Entities;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Responses;
 using System.Text.Json;
 using FluentAssertions;
-using CustomersService.Core.DTOs.Requests;
+using CustomersService.Core.IntegrationModels.Requests;
 
 namespace CustomersService.Application.Tests
 {

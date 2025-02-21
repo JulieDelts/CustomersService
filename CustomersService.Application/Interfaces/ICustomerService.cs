@@ -14,5 +14,6 @@ namespace CustomersService.Application.Interfaces
         Task UpdatePasswordAsync(Guid id, string newPassword, string currentPassword);
         Task UpdateProfileAsync(Guid id, CustomerUpdateModel customerUpdateModel);
         Task BatchUpdateRoleAsync(List<Guid> vipCustomerIds);
+        Task<string> AuthenticateAsync(string email, string password);
     }
 }

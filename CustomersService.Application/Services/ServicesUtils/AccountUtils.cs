@@ -14,16 +14,16 @@ public class AccountUtils(
     {
         logger.LogDebug("Retrieving account with ID {AccountId}", id);
 
-        var accountDTO = await accountRepository.GetByConditionAsync(a => a.Id == id);
-        logger.LogTrace("Retrieved account data: {@AccountDTO}", accountDTO);
+        var accountDto = await accountRepository.GetByConditionAsync(a => a.Id == id);
+        logger.LogTrace("Retrieved account data: {@AccountDto}", accountDto);
 
-        if (accountDTO == null)
+        if (accountDto == null)
         {
             logger.LogWarning("Account with id {AccountId} was not found", id);
             throw new EntityNotFoundException($"Account with id {id} was not found.");
         }
 
         logger.LogDebug("Successfully retrieved account with ID {AccountId}", id);
-        return accountDTO;
+        return accountDto;
     }
 }

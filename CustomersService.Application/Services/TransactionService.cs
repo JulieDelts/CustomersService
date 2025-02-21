@@ -3,8 +3,8 @@ using CustomersService.Application.Exceptions;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
-using CustomersService.Core.DTOs.Requests;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Requests;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,7 +16,7 @@ public class TransactionService(
         AccountUtils accountUtils,
         ILogger<TransactionService> logger,
         ICommonHttpClient httpClient,
-        IOptions<TransactionStoreAPIConnectionStrings> options)
+        IOptions<TransactionStoreApiConnectionStrings> options)
     : ITransactionService
 {
     private readonly string controllerPath = options.Value?.Transactions;
@@ -25,11 +25,10 @@ public class TransactionService(
     {
         logger.LogInformation("Retrieving transaction with ID {TransactionId}", id);
         var transaction = await httpClient.SendGetRequestAsync<TransactionResponse>($"{controllerPath}/{id}");
-        logger.LogTrace("Retrieved transaction: {@Transaction}", transaction);
         return transaction;
     }
 
-    public async Task<Guid> CreateSimpleTransactionAsync(CreateTransactionRequest requestModel, TransactionType transactionType)
+    public async Task<Guid> CreateSimpleTransactionAsync(CreateTransactionRequest requestModel, Guid customerId, TransactionType transactionType)
     {
         string path;
         if (transactionType == TransactionType.Deposit)
@@ -39,31 +38,28 @@ public class TransactionService(
         else throw new EntityConflictException("TransactionType is not correct.");
 
         logger.LogInformation("Creating simple transaction for account {AccountId}", requestModel.AccountId);
-        logger.LogTrace("Transaction request data: {@RequestModel}", requestModel);
 
-        await ValidateSimpleTransactionRequestAsync(requestModel);
+        await ValidateSimpleTransactionRequestAsync(requestModel, customerId);
 
         var transactionId = await httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>(path, requestModel);
         logger.LogInformation("Successfully created transaction with ID {TransactionId}", transactionId);
         return transactionId;
     }
 
-    public async Task<List<Guid>> CreateTransferTransactionAsync(CreateTransferTransactionRequest requestModel)
+    public async Task<List<Guid>> CreateTransferTransactionAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
     {
         logger.LogInformation("Creating transfer transaction from account {FromAccountId} to account {ToAccountId}", requestModel.FromAccountId, requestModel.ToAccountId);
-        logger.LogTrace("Transfer transaction request data: {@RequestModel}", requestModel);
 
-        await ValidateTransferTransactionRequestAsync(requestModel);
+        await ValidateTransferTransactionRequestAsync(requestModel, customerId);
 
         var transactionIds = await httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{controllerPath}/transfer", requestModel);
         logger.LogInformation("Successfully created transfer transactions with IDs {TransactionIds}", transactionIds);
         return transactionIds;
     }
 
-    private async Task ValidateSimpleTransactionRequestAsync(CreateTransactionRequest requestModel)
+    private async Task ValidateSimpleTransactionRequestAsync(CreateTransactionRequest requestModel, Guid customerId)
     {
         var account = await accountUtils.GetByIdAsync(requestModel.AccountId);
-        logger.LogTrace("Retrieved account data: {@Account}", account);
 
         if (account.IsDeactivated)
         {
@@ -77,8 +73,13 @@ public class TransactionService(
             throw new EntityConflictException($"Deposit and withdraw transactions are only allowed for accounts with currencies {Currency.RUB}, {Currency.USD}.");
         }
 
+        if(account.CustomerId != customerId)
+        {
+            logger.LogWarning("Customers are only allowed to create transactions for their own accounts. Account Id {accountId}", account.Id);
+            throw new AuthorizationFailedException("Customers are only allowed to create transactions for their own accounts.");
+        }
+
         var customer = await customerUtils.GetByIdAsync(account.CustomerId);
-        logger.LogTrace("Retrieved customer data: {@Customer}", customer);
 
         if (customer.IsDeactivated)
         {
@@ -87,13 +88,11 @@ public class TransactionService(
         }
     }
 
-    private async Task ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel)
+    private async Task ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
     {
         var fromAccount = await accountUtils.GetByIdAsync(requestModel.FromAccountId);
-        logger.LogTrace("Retrieved from account data: {@FromAccount}", fromAccount);
 
         var toAccount = await accountUtils.GetByIdAsync(requestModel.ToAccountId);
-        logger.LogTrace("Retrieved to account data: {@ToAccount}", toAccount);
 
         if (toAccount.IsDeactivated)
         {
@@ -107,6 +106,12 @@ public class TransactionService(
             throw new EntityConflictException("Accounts must belong to the same customer.");
         }
 
+        if (fromAccount.CustomerId != customerId)
+        {
+            logger.LogWarning("Customers are only allowed to create transactions for their own accounts. Account Ids {fromAccountId}, {toAccountId}", requestModel.FromAccountId, requestModel.ToAccountId);
+            throw new AuthorizationFailedException("Customers are only allowed to create transactions for their own accounts.");
+        }
+
         if (fromAccount.IsDeactivated
             && toAccount.Currency != Currency.RUB)
         {
@@ -115,13 +120,15 @@ public class TransactionService(
         }
 
         var customer = await customerUtils.GetByIdAsync(fromAccount.CustomerId);
-        logger.LogTrace("Retrieved customer data: {@Customer}", customer);
 
         if (customer.IsDeactivated)
         {
             logger.LogWarning("Customer with id {CustomerId} is deactivated", customer.Id);
             throw new EntityConflictException($"Customer with id {customer.Id} is deactivated.");
         }
+
+        requestModel.ToCurrency = toAccount.Currency;
+        requestModel.FromCurrency = fromAccount.Currency;
     }
 }
 

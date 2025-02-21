@@ -31,18 +31,17 @@ public class CustomerService(
             throw new EntityConflictException($"Customer with email {customerToRegister.Email} already exists.");
         }
 
-        var customerDTO = mapper.Map<Customer>(customerToRegister);
-        customerDTO.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(customerToRegister.Password);
-        customerDTO.Role = Role.Regular;
+        var customerDto = mapper.Map<Customer>(customerToRegister);
+        customerDto.Password = BCrypt.Net.BCrypt.EnhancedHashPassword(customerToRegister.Password);
+        customerDto.Role = Role.Regular;
 
-        var accountDTO = new Account() { Currency = Currency.RUB };
-
+        var accountDto = new Account() { Currency = Currency.RUB };
 
         try
         {
-            await customerUnitOfWork.CreateCustomerAsync(customerDTO, accountDTO);
-            logger.LogInformation("Customer registered successfully with ID {CustomerId}", customerDTO.Id);
-            return customerDTO.Id;
+            await customerUnitOfWork.CreateCustomerAsync(customerDto, accountDto);
+            logger.LogInformation("Customer registered successfully with ID {CustomerId}", customerDto.Id);
+            return customerDto.Id;
         }
         catch (Exception ex)
         {
@@ -52,12 +51,28 @@ public class CustomerService(
         }
     }
 
+    public async Task<string> AuthenticateAsync(string email, string password)
+    {
+        logger.LogInformation("Authenticating customer with email {Email}", MaskEmail(email));
+
+        var customer = await customerRepository.GetByConditionAsync(c => c.Email == email);
+
+        if (customer != null && customerUtils.CheckPassword(password, customer.Password))
+        {
+            return customerUtils.GenerateToken(customer);
+        }
+        else
+        {
+            throw new WrongCredentialsException("The credentials are not correct.");
+        }
+    }
+
     public async Task<List<CustomerInfoModel>> GetAllAsync(int? pageNumber, int? pageSize)
     {
         logger.LogInformation("Retrieving all customers with pageNumber {PageNumber} and pageSize {PageSize}", pageNumber, pageSize);
 
-        var customerDTOs = await customerRepository.GetAllAsync(pageNumber ?? 1, pageSize ?? 10);
-        var customers = mapper.Map<List<CustomerInfoModel>>(customerDTOs);
+        var customerDtos = await customerRepository.GetAllAsync(pageNumber ?? 1, pageSize ?? 10);
+        var customers = mapper.Map<List<CustomerInfoModel>>(customerDtos);
 
         logger.LogInformation("Successfully retrieved {Count} customers", customers.Count);
         return customers;
@@ -67,8 +82,8 @@ public class CustomerService(
     {
         logger.LogInformation("Retrieving full customer info for customer {CustomerId}", id);
 
-        var customerDTO = await customerUtils.GetByIdAsync(id);
-        var customer = mapper.Map<CustomerFullInfoModel>(customerDTO);
+        var customerDto = await customerUtils.GetByIdAsync(id);
+        var customer = mapper.Map<CustomerFullInfoModel>(customerDto);
 
         logger.LogInformation("Successfully retrieved full customer info for customer {CustomerId}", id);
         return customer;
@@ -78,18 +93,18 @@ public class CustomerService(
     {
         logger.LogInformation("Updating profile for customer {CustomerId}", id);
 
-        var customerDTO = await customerUtils.GetByIdAsync(id);
-        logger.LogDebug("Retrieved customer data: {@CustomerDTO}", customerDTO);
+        var customerDto = await customerUtils.GetByIdAsync(id);
+        logger.LogDebug("Retrieved customer data: {@CustomerDto}", customerDto);
 
-        if (customerDTO.IsDeactivated)
+        if (customerDto.IsDeactivated)
         {
             logger.LogWarning("Customer with id {CustomerId} is deactivated", id);
             throw new EntityConflictException($"Customer with id {id} is deactivated.");
         }
 
-        var customerUpdateDTO = mapper.Map<Customer>(customerUpdateModel);
+        var customerUpdateDto = mapper.Map<Customer>(customerUpdateModel);
 
-        await customerRepository.UpdateProfileAsync(customerDTO, customerUpdateDTO);
+        await customerRepository.UpdateProfileAsync(customerDto, customerUpdateDto);
         logger.LogInformation("Successfully updated profile for customer {CustomerId}", id);
     }
 
@@ -97,15 +112,15 @@ public class CustomerService(
     {
         logger.LogInformation("Updating password for customer {CustomerId}", id);
 
-        var customerDTO = await customerUtils.GetByIdAsync(id);
+        var customerDto = await customerUtils.GetByIdAsync(id);
 
-        if (customerDTO.IsDeactivated)
+        if (customerDto.IsDeactivated)
         {
             logger.LogWarning("Customer with id {CustomerId} is deactivated", id);
             throw new EntityConflictException($"Customer with id {id} is deactivated.");
         }
 
-        if (!CheckPassword(currentPassword, customerDTO.Password))
+        if (!customerUtils.CheckPassword(currentPassword, customerDto.Password))
         {
             logger.LogWarning("The credentials are not correct for customer {CustomerId}", id);
             throw new WrongCredentialsException("The credentials are not correct.");
@@ -113,7 +128,7 @@ public class CustomerService(
 
         var password = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword);
 
-        await customerRepository.UpdatePasswordAsync(customerDTO, password);
+        await customerRepository.UpdatePasswordAsync(customerDto, password);
         logger.LogInformation("Successfully updated password for customer {CustomerId}", id);
     }
 
@@ -121,9 +136,9 @@ public class CustomerService(
     {
         logger.LogInformation("Setting VIP status for customer {CustomerId}", id);
 
-        var customerDTO = await customerUtils.GetByIdAsync(id);
+        var customerDto = await customerUtils.GetByIdAsync(id);
 
-        if (customerDTO.IsDeactivated)
+        if (customerDto.IsDeactivated)
         {
             logger.LogWarning("Customer with id {CustomerId} is deactivated", id);
             throw new EntityConflictException($"Customer with id {id} is deactivated.");
@@ -137,7 +152,7 @@ public class CustomerService(
 
         try
         {
-            await customerUnitOfWork.SetManualVipAsync(customerDTO, vipExpirationDate, accountsToActivate);
+            await customerUnitOfWork.SetManualVipAsync(customerDto, vipExpirationDate, accountsToActivate);
             logger.LogInformation("Successfully set VIP status for customer {CustomerId}", id);
         }
         catch (Exception ex)
@@ -170,9 +185,9 @@ public class CustomerService(
     {
         logger.LogInformation("Deactivating customer {CustomerId}", id);
 
-        var customerDTO = await customerUtils.GetByIdAsync(id);
+        var customerDto = await customerUtils.GetByIdAsync(id);
 
-        await customerRepository.DeactivateAsync(customerDTO);
+        await customerRepository.DeactivateAsync(customerDto);
         logger.LogInformation("Successfully deactivated customer {CustomerId}", id);
     }
 
@@ -180,17 +195,12 @@ public class CustomerService(
     {
         logger.LogInformation("Activating customer {CustomerId}", id);
 
-        var customerDTO = await customerUtils.GetByIdAsync(id);
+        var customerDto = await customerUtils.GetByIdAsync(id);
 
-        await customerRepository.ActivateAsync(customerDTO);
+        await customerRepository.ActivateAsync(customerDto);
         logger.LogInformation("Successfully activated customer {CustomerId}", id);
     }
 
-    private bool CheckPassword(string passwordToCheck, string passwordHash)
-    {
-        logger.LogDebug("Checking password");
-        return BCrypt.Net.BCrypt.EnhancedVerify(passwordToCheck, passwordHash);
-    }
     private string MaskEmail(string email)
     {
         var atIndex = email.IndexOf('@');

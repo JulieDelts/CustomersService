@@ -12,6 +12,8 @@ using CustomersService.Application.Exceptions;
 using CustomersService.Application.Tests.TestCases;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using CustomersService.Core;
 
 namespace CustomersService.Application.Tests
 {
@@ -22,6 +24,7 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ICustomerUnitOfWork> _customerUnitOfWorkMock;
         private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
         private readonly Mock<ILogger<CustomerService>> _customerServiceLoggerMock;
+        private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
 
         private readonly Mapper _mapper;
         private readonly CustomerService _sut;
@@ -33,6 +36,7 @@ namespace CustomersService.Application.Tests
             _customerUnitOfWorkMock = new();
             _customerUtilsLoggerMock = new();
             _customerServiceLoggerMock = new();
+            _authConfigOptionsMock = new();
             var config = new MapperConfiguration(
             cfg =>
             {
@@ -43,7 +47,9 @@ namespace CustomersService.Application.Tests
                 _customerRepositoryMock.Object,
                 _accountRepositoryMock.Object,
                 _mapper,
-                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
+                new CustomerUtils(_customerRepositoryMock.Object,
+                _customerUtilsLoggerMock.Object,
+                _authConfigOptionsMock.Object),
                 _customerUnitOfWorkMock.Object,
                 _customerServiceLoggerMock.Object
             );
@@ -131,6 +137,55 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
+        public async Task AuthenticateAsync_ValidCredentials_AuthenticateSuccess()
+        {
+            // Arrange
+            var email = "email";
+            var password = "password";
+            var customer = new Customer() { Id = Guid.NewGuid(), Role = Role.Regular, Email = email, Password = BCrypt.Net.BCrypt.EnhancedHashPassword(password) };
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Email == email)).ReturnsAsync(customer);
+
+            // Act
+           var result = await _sut.AuthenticateAsync(email, password);
+
+            // Assert
+            Assert.True(!string.IsNullOrEmpty(result));
+        }
+
+        [Fact]
+        public async Task AuthenticateAsync_InvalidLogin_WrongCredentialsExceptionThrown()
+        {
+            // Arrange
+            var email = "InvalidEmail";
+            var password = "Password";
+            var message = "The credentials are not correct.";
+
+            // Act
+            var exception = await Assert.ThrowsAsync<WrongCredentialsException>(async () => await _sut.AuthenticateAsync(email, password));
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task AuthenticateAsync_InvalidPassword_WrongCredentialsExceptionThrown()
+        {
+            // Arrange
+            var email = "Email";
+            var invalidPassword = "InvalidPassword";
+            var validPassword = "ValidPassword";
+            var validPasswordHash = BCrypt.Net.BCrypt.EnhancedHashPassword(validPassword);
+            var message = "The credentials are not correct.";
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(t => t.Email == email)).ReturnsAsync(new Customer() { Email = email, Password = validPasswordHash });
+
+            // Act
+            var exception = await Assert.ThrowsAsync<WrongCredentialsException>(async () => await _sut.AuthenticateAsync(email, invalidPassword));
+
+            // Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
         public async Task GetAllAsync_GetSuccess()
         {
             // Arrange
@@ -150,24 +205,24 @@ namespace CustomersService.Application.Tests
 
         [Theory]
         [MemberData(nameof(CustomerServiceTestCases.Customers), MemberType = typeof(CustomerServiceTestCases))]
-        public void GetAllAsync_ValidModel_MappingSuccess(List<Customer> customerDTOs)
+        public void GetAllAsync_ValidModel_MappingSuccess(List<Customer> customerDtos)
         {
             //Act
-            var customers = _mapper.Map<List<CustomerInfoModel>>(customerDTOs);
+            var customers = _mapper.Map<List<CustomerInfoModel>>(customerDtos);
 
             //Assert
-            customers.Should().BeEquivalentTo(customerDTOs, options => options.ExcludingMissingMembers());
+            customers.Should().BeEquivalentTo(customerDtos, options => options.ExcludingMissingMembers());
         }
 
         [Theory]
         [MemberData(nameof(CustomerServiceTestCases.CustomerWithFullInfo), MemberType = typeof(CustomerServiceTestCases))]
-        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Customer customerDTO)
+        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Customer customerDto)
         {
             //Act 
-            var customer = _mapper.Map<CustomerFullInfoModel>(customerDTO);
+            var customer = _mapper.Map<CustomerFullInfoModel>(customerDto);
 
             //Assert
-            customer.Should().BeEquivalentTo(customerDTO, options => options.ExcludingMissingMembers());
+            customer.Should().BeEquivalentTo(customerDto, options => options.ExcludingMissingMembers());
         }
 
         [Fact]

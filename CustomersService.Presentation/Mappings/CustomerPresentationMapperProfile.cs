@@ -11,7 +11,8 @@ namespace CustomersService.Presentation.Mappings
         {
             CreateMap<CustomerInfoModel, CustomerResponse>();
             CreateMap<CustomerFullInfoModel, CustomerFullResponse>();
-            CreateMap<RegisterCustomerRequest, CustomerRegistrationModel>();
+            CreateMap<RegisterCustomerRequest, CustomerRegistrationModel>()
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.ToLower())); 
             CreateMap<CustomerUpdateRequest, CustomerUpdateModel>();
         }
     }

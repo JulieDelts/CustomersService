@@ -1,4 +1,4 @@
-﻿
+
 using AutoMapper;
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Interfaces;
@@ -8,7 +8,7 @@ using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Application.Tests.TestCases;
 using CustomersService.Core;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
@@ -28,7 +28,6 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
         private readonly Mock<ICommonHttpClient> _commonHttpClientMock;
-        private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _optionsMock;
         private readonly AccountService _sut;
 
         public AccountServiceTests()
@@ -39,7 +38,6 @@ namespace CustomersService.Application.Tests
             _accountUtilsLoggerMock = new();
             _accountServiceLoggerMock = new();
             _commonHttpClientMock = new();
-            _optionsMock = new();
             var config = new MapperConfiguration(
             cfg =>
             {
@@ -50,11 +48,11 @@ namespace CustomersService.Application.Tests
             _sut = new(
                 _accountRepositoryMock.Object,
                 _mapper,
-                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
+                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object, new Mock<IOptions<AuthConfigOptions>>().Object),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _accountServiceLoggerMock.Object,
                 _commonHttpClientMock.Object,
-                _optionsMock.Object
+                new Mock<IOptions<TransactionStoreApiConnectionStrings>>().Object
             );
         }
 
@@ -173,13 +171,13 @@ namespace CustomersService.Application.Tests
 
         [Theory]
         [MemberData(nameof(AccountServiceTestCases.CustomerAccounts), MemberType = typeof(AccountServiceTestCases))]
-        public void GetAllByCustomerIdAsync_ValidModel_MappingSuccess(List<Account> accountDTOs)
+        public void GetAllByCustomerIdAsync_ValidModel_MappingSuccess(List<Account> accountDtos)
         {
             //Act
-            var accounts = _mapper.Map<List<AccountInfoModel>>(accountDTOs);
+            var accounts = _mapper.Map<List<AccountInfoModel>>(accountDtos);
 
             //Assert
-            accounts.Should().BeEquivalentTo(accountDTOs, options => options.ExcludingMissingMembers());
+            accounts.Should().BeEquivalentTo(accountDtos, options => options.ExcludingMissingMembers());
         }
 
         [Fact]
@@ -187,7 +185,8 @@ namespace CustomersService.Application.Tests
         {
             //Arrange
             var accountId = Guid.NewGuid();
-            var account = new Account() { Id = accountId };
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId };
             var accountBalance = new BalanceResponse()
             {
                 AccountId = accountId,
@@ -196,13 +195,14 @@ namespace CustomersService.Application.Tests
             var accountModel = new AccountFullInfoModel() 
             {
                 Id = accountId,
+                CustomerId = customerId,
                 Balance = accountBalance.Balance
             };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<BalanceResponse>($"{null}/{accountId}/balance")).ReturnsAsync(accountBalance);
 
             //Act 
-            var result = await _sut.GetFullInfoByIdAsync(accountId);
+            var result = await _sut.GetFullInfoByIdAsync(accountId, customerId);
 
             //Assert
             accountModel.Should().BeEquivalentTo(result);
@@ -213,13 +213,13 @@ namespace CustomersService.Application.Tests
 
         [Theory]
         [MemberData(nameof(AccountServiceTestCases.AccountWithFullInfo), MemberType = typeof(AccountServiceTestCases))]
-        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Account accountDTO)
+        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Account accountDto)
         {
             //Act 
-            var account = _mapper.Map<AccountFullInfoModel>(accountDTO);
+            var account = _mapper.Map<AccountFullInfoModel>(accountDto);
 
             //Assert
-            account.Should().BeEquivalentTo(accountDTO, options => options.ExcludingMissingMembers());
+            account.Should().BeEquivalentTo(accountDto, options => options.ExcludingMissingMembers());
         }
 
         [Fact]
@@ -227,6 +227,8 @@ namespace CustomersService.Application.Tests
         {
             //Arrange
             var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var account = new Account() { Id = accountId, CustomerId = customerId };
             var transactions = new List<TransactionResponse>() 
             { 
                 new TransactionResponse()
@@ -238,10 +240,11 @@ namespace CustomersService.Application.Tests
                     TransactionType = TransactionType.Deposit
                 }
             };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<List<TransactionResponse>>($"{null}/{accountId}/transactions")).ReturnsAsync(transactions);
 
             //Act 
-            var result = await _sut.GetTransactionsByAccountIdAsync(accountId);
+            var result = await _sut.GetTransactionsByAccountIdAsync(accountId, customerId);
 
             //Assert
             transactions.Should().BeEquivalentTo(result);

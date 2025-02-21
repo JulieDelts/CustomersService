@@ -19,7 +19,7 @@ namespace CustomersService.Application.Configuration
             services.AddScoped<CustomerUtils>();
             services.AddHttpClient<ICommonHttpClient, CommonHttpClient>((serviceProvider, client) =>
              {
-                var options = serviceProvider.GetRequiredService<IOptions<TransactionStoreAPIConnectionStrings>>();
+                var options = serviceProvider.GetRequiredService<IOptions<TransactionStoreApiConnectionStrings>>();
                 client.BaseAddress = new Uri(options.Value.BaseUrl);
                 client.Timeout = new TimeSpan(0, 5, 0);
              });

@@ -1,9 +1,9 @@
 ﻿
 using System.Net;
 using AutoMapper;
-using Castle.Core.Logging;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
+using CustomersService.Core.Enum;
 using CustomersService.Presentation.Controllers;
 using CustomersService.Presentation.Mappings;
 using CustomersService.Presentation.Models.Requests;
@@ -11,7 +11,6 @@ using CustomersService.Presentation.Models.Responses;
 using CustomersService.Presentation.Tests.TestCases;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace CustomersService.Presentation.Tests;
@@ -19,21 +18,22 @@ namespace CustomersService.Presentation.Tests;
 public class CustomerControllerTests
 {
     private readonly Mock<ICustomerService> _customerServiceMock;
-    private readonly Mock<ILogger<CustomerController>> _loggerMock;
+    private readonly Mock<IAccountService> _accountServiceMock;
     private readonly Mapper _mapper;
     private readonly CustomerController _sut;
 
     public CustomerControllerTests()
     {
         _customerServiceMock = new();
-        _loggerMock = new();
+        _accountServiceMock = new();
         var config = new MapperConfiguration(
         cfg =>
         {
             cfg.AddProfile(new CustomerPresentationMapperProfile());
+            cfg.AddProfile(new AccountPresentationMapperProfile());
         });
         _mapper = new Mapper(config);
-        _sut = new(_customerServiceMock.Object, _mapper, _loggerMock.Object);
+        _sut = new(_customerServiceMock.Object,_accountServiceMock.Object, _mapper);
     }
 
     [Fact]
@@ -66,6 +66,26 @@ public class CustomerControllerTests
 
         //Assert
         customerModel.Should().BeEquivalentTo(customerRegisterRequest);
+    }
+
+    [Fact]
+    public async Task AuthenticateAsync_ValidModel_AuthenticateSuccess()
+    {
+        // Arrange
+        var expectedStatusCode = HttpStatusCode.OK;
+        var customer = new LoginRequest() { Email = "test@gmail.com", Password = "qweqweqwe" };
+        _customerServiceMock.Setup(t => t.AuthenticateAsync(customer.Email, customer.Password)).ReturnsAsync("token");
+
+        //Act
+        var result = await _sut.AuthenticateAsync(customer);
+        var statusCode = (result.Result as ObjectResult).StatusCode;
+
+        //Assert
+        Assert.IsType<ActionResult<string>>(result);
+        Assert.Equal((int)expectedStatusCode, statusCode);
+        _customerServiceMock.Verify(t =>
+           t.AuthenticateAsync(customer.Email, customer.Password),
+           Times.Once);
     }
 
     [Fact]
@@ -134,12 +154,46 @@ public class CustomerControllerTests
     }
 
     [Fact]
+    public async Task GetAccountsByCustomerIdAsync_GetSuccess()
+    {
+        // Arrange
+        var expectedStatusCode = HttpStatusCode.OK;
+        var customerId = Guid.NewGuid();
+        var accounts = new List<AccountInfoModel>();
+        _accountServiceMock.Setup(t => t.GetAllByCustomerIdAsync(customerId)).ReturnsAsync(accounts);
+        UserClaimsMockSetup.SetUserClaims(_sut, customerId, Role.Regular);
+
+        //Act
+        var result = await _sut.GetAccountsByCustomerIdAsync(customerId);
+        var statusCode = (result.Result as ObjectResult).StatusCode;
+
+        //Assert
+        Assert.IsType<ActionResult<List<AccountResponse>>>(result);
+        Assert.Equal((int)expectedStatusCode, statusCode);
+        _accountServiceMock.Verify(t =>
+           t.GetAllByCustomerIdAsync(customerId),
+           Times.Once);
+    }
+
+    [Theory]
+    [MemberData(nameof(CustomerControllerTestCases.Accounts), MemberType = typeof(CustomerControllerTestCases))]
+    public void GetAccountsByCustomerIdAsync_ValidModel_MappingSuccess(List<AccountInfoModel> accountModels)
+    {
+        //Act
+        var accounts = _mapper.Map<List<AccountResponse>>(accountModels);
+
+        //Assert
+        accounts.Should().BeEquivalentTo(accountModels);
+    }
+
+    [Fact]
     public async Task UpdateProfileAsync_ValidModel_UpdateSuccess()
     {
         // Arrange
         var expectedStatusCode = HttpStatusCode.NoContent;
         var id = Guid.NewGuid();
         var customerUpdate = new CustomerUpdateRequest() { FirstName = "Edgar" };
+        UserClaimsMockSetup.SetUserClaims(_sut, id, Role.Regular);
 
         //Act
         var result = await _sut.UpdateProfileAsync(id, customerUpdate);
@@ -171,6 +225,7 @@ public class CustomerControllerTests
         var expectedStatusCode = HttpStatusCode.NoContent;
         var id = Guid.NewGuid();
         var passwordRequest = new PasswordUpdateRequest() { NewPassword = "NewTestPassword", CurrentPassword = "CurrentTestPassword" };
+        UserClaimsMockSetup.SetUserClaims(_sut, id, Role.Regular);
 
         //Act
         var result = await _sut.UpdatePasswordAsync(id, passwordRequest);

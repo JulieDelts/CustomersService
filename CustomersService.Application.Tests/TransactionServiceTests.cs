@@ -1,11 +1,13 @@
-﻿
+
 using CustomersService.Application.Exceptions;
+using CustomersService.Application.Integrations;
 using CustomersService.Application.Interfaces;
+using CustomersService.Application.Models;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
-using CustomersService.Core.DTOs.Requests;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Requests;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
@@ -24,7 +26,6 @@ namespace CustomersService.Application.Tests
         private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
         private readonly Mock<ILogger<TransactionService>> _transactionServiceLoggerMock;
         private readonly Mock<ICommonHttpClient> _commonHttpClientMock;
-        private readonly Mock<IOptions<TransactionStoreAPIConnectionStrings>> _optionsMock;
         private TransactionService _sut;
   
         public TransactionServiceTests()
@@ -35,14 +36,12 @@ namespace CustomersService.Application.Tests
             _accountUtilsLoggerMock = new Mock<ILogger<AccountUtils>>();
             _transactionServiceLoggerMock = new Mock<ILogger<TransactionService>>();
             _commonHttpClientMock = new();
-            _optionsMock = new();
-
             _sut = new TransactionService(
-                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object),
+                new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object, null),
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _transactionServiceLoggerMock.Object,
                 _commonHttpClientMock.Object,
-                _optionsMock.Object);
+                new Mock<IOptions<TransactionStoreApiConnectionStrings>>().Object);
         }
 
         [Fact]
@@ -79,14 +78,14 @@ namespace CustomersService.Application.Tests
             var transactionId = Guid.NewGuid();
             var transactionType = TransactionType.Deposit;
             var request = new CreateTransactionRequest() { AccountId = accountId };
-            var account = new Account() { CustomerId = customerId, Currency = Currency.USD };
+            var account = new Account() { Id = accountId, CustomerId = customerId, Currency = Currency.USD };
             var customer = new Customer();
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
             _commonHttpClientMock.Setup(t => t.SendPostRequestAsync<CreateTransactionRequest, Guid>($"{null}/deposit", request)).ReturnsAsync(transactionId);
 
             //Act 
-            var result = await _sut.CreateSimpleTransactionAsync(request, transactionType);
+            var result = await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType);
 
             //Assert
             Assert.Equal(transactionId, result);
@@ -102,12 +101,13 @@ namespace CustomersService.Application.Tests
 
             //Arrange
             var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
             var message = "TransactionType is not correct.";
             var transactionType = TransactionType.Transfer;
             var request = new CreateTransactionRequest() { AccountId = accountId };
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType));
 
             //Assert
             Assert.Equal(message, exception.Message);
@@ -119,14 +119,15 @@ namespace CustomersService.Application.Tests
 
             //Arrange
             var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
             var message = $"Account with id {accountId} is deactivated.";
             var transactionType = TransactionType.Deposit;
-            var account = new Account() { Id = accountId, IsDeactivated = true };
+            var account = new Account() { CustomerId = customerId, Id = accountId, IsDeactivated = true };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             var request = new CreateTransactionRequest() { AccountId = accountId };
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType));
 
             //Assert
             Assert.Equal(message, exception.Message);
@@ -138,14 +139,38 @@ namespace CustomersService.Application.Tests
 
             //Arrange
             var accountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
             var transactionType = TransactionType.Deposit;
             var message = $"Deposit and withdraw transactions are only allowed for accounts with currencies {Currency.RUB}, {Currency.USD}.";
-            var account = new Account() { Id = accountId, Currency = Currency.JPY };
+            var account = new Account() { Id = accountId, CustomerId = customerId, Currency = Currency.JPY };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             var request = new CreateTransactionRequest() { AccountId = accountId };
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateSimpleTransactionAsync_CustomerNotAccountOwner_AuthorizationFailedExceptionThrown()
+        {
+
+            //Arrange
+            var accountId = Guid.NewGuid();
+            var customerClaimId = Guid.NewGuid();   
+            var customerId = Guid.NewGuid();
+            var transactionType = TransactionType.Deposit;
+            var message = "Customers are only allowed to create transactions for their own accounts.";
+            var account = new Account() { Id = accountId, Currency = Currency.USD, CustomerId = customerId };
+            var customer = new Customer() { Id = customerId };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+            var request = new CreateTransactionRequest() { AccountId = accountId };
+
+            //Act
+            var exception = await Assert.ThrowsAsync<AuthorizationFailedException>(async () => await _sut.CreateSimpleTransactionAsync(request, customerClaimId, transactionType));
 
             //Assert
             Assert.Equal(message, exception.Message);
@@ -167,7 +192,7 @@ namespace CustomersService.Application.Tests
             var request = new CreateTransactionRequest() { AccountId = accountId };
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, transactionType));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateSimpleTransactionAsync(request, customerId, transactionType));
 
             //Assert
             Assert.Equal(message, exception.Message);
@@ -181,9 +206,9 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var idList = new List<Guid>() { Guid.NewGuid(), Guid.NewGuid() };
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.EUR, ToCurrency = Currency.RUB };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.USD };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
@@ -191,7 +216,7 @@ namespace CustomersService.Application.Tests
             _commonHttpClientMock.Setup(t => t.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{null}/transfer", request)).ReturnsAsync(idList);
 
             //act 
-            var result = await _sut.CreateTransferTransactionAsync(request);
+            var result = await _sut.CreateTransferTransactionAsync(request, customerId);
 
             // Assert
             idList.Should().BeEquivalentTo(result);
@@ -207,15 +232,16 @@ namespace CustomersService.Application.Tests
             //arrange
             var fromAccountId = Guid.NewGuid();
             var toAccountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
             var message = $"Account with id {toAccountId} is deactivated.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.EUR, ToCurrency = Currency.RUB };
-            var fromAccount = new Account() { Id = fromAccountId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, Currency = request.ToCurrency, IsDeactivated = true };
+            var fromAccount = new Account() { Id = fromAccountId, Currency = Currency.EUR };
+            var toAccount = new Account() { Id = toAccountId, Currency = Currency.RUB, IsDeactivated = true };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request, customerId));
 
             //Assert
             Assert.Equal(message, exception.Message);
@@ -227,15 +253,38 @@ namespace CustomersService.Application.Tests
             //arrange
             var fromAccountId = Guid.NewGuid();
             var toAccountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
             var message = "Accounts must belong to the same customer.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.EUR, ToCurrency = Currency.RUB };
-            var fromAccount = new Account() { Id = fromAccountId, Currency = request.FromCurrency, CustomerId = Guid.NewGuid() };
-            var toAccount = new Account() { Id = toAccountId, Currency = request.ToCurrency, CustomerId = Guid.NewGuid() };
+            var fromAccount = new Account() { Id = fromAccountId, Currency = Currency.EUR, CustomerId = Guid.NewGuid() };
+            var toAccount = new Account() { Id = toAccountId, Currency = Currency.RUB, CustomerId = Guid.NewGuid() };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request, customerId));
+
+            //Assert
+            Assert.Equal(message, exception.Message);
+        }
+
+        [Fact]
+        public async Task CreateTransferTransactionAsync_CustomerNotAccountOwner_AuthorizationFailedExceptionThrown()
+        {
+            //arrange
+            var fromAccountId = Guid.NewGuid();
+            var toAccountId = Guid.NewGuid();
+            var customerId = Guid.NewGuid();
+            var customerClaimId = Guid.NewGuid();
+            var message = "Customers are only allowed to create transactions for their own accounts.";
+            var fromAccount = new Account() { Id = fromAccountId, Currency = Currency.EUR, CustomerId = customerId };
+            var toAccount = new Account() { Id = toAccountId, Currency = Currency.RUB, CustomerId = customerId };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
+
+            //Act
+            var exception = await Assert.ThrowsAsync<AuthorizationFailedException>(async () => await _sut.CreateTransferTransactionAsync(request, customerClaimId));
 
             //Assert
             Assert.Equal(message, exception.Message);
@@ -249,16 +298,16 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = $"Transfer from deactivated accounts is allowed only to the account with currency {Currency.RUB}.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.JPY, ToCurrency = Currency.EUR };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency, IsDeactivated = true };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.JPY, IsDeactivated = true };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.EUR };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request, customerId));
 
             //Assert
             Assert.Equal(message, exception.Message);
@@ -272,16 +321,16 @@ namespace CustomersService.Application.Tests
             var toAccountId = Guid.NewGuid();
             var customerId = Guid.NewGuid();
             var message = $"Customer with id {customerId} is deactivated.";
-            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = Currency.JPY, ToCurrency = Currency.EUR };
-            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = request.FromCurrency };
-            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = request.ToCurrency };
+            var fromAccount = new Account() { Id = fromAccountId, CustomerId = customerId, Currency = Currency.EUR };
+            var toAccount = new Account() { Id = toAccountId, CustomerId = customerId, Currency = Currency.RUB };
+            var request = new CreateTransferTransactionRequest() { FromAccountId = fromAccountId, ToAccountId = toAccountId, FromCurrency = fromAccount.Currency, ToCurrency = toAccount.Currency };
             var customer = new Customer() { Id = customerId, IsDeactivated = true };
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == fromAccountId)).ReturnsAsync(fromAccount);
             _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == toAccountId)).ReturnsAsync(toAccount);
             _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
 
             //Act
-            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request));
+            var exception = await Assert.ThrowsAsync<EntityConflictException>(async () => await _sut.CreateTransferTransactionAsync(request, customerId));
 
             //Assert
             Assert.Equal(message, exception.Message);

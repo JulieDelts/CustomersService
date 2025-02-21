@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using CustomersService.Core.Enum;
+using FluentValidation;
 
 namespace CustomersService.Presentation.Models.Requests.Validators
 {
@@ -7,7 +8,7 @@ namespace CustomersService.Presentation.Models.Requests.Validators
         public AccountAddRequestValidator()
         {
             RuleFor(model => model.CustomerId).NotEmpty();
-            RuleFor(model => model.Currency).NotEmpty().IsInEnum();
+            RuleFor(model => model.Currency).NotEmpty().IsInEnum().NotEqual(Currency.Unknown);
         }
     }
 }

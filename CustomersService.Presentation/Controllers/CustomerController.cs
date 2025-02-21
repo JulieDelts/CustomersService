@@ -1,23 +1,24 @@
 ﻿using AutoMapper;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
+using CustomersService.Core.Enum;
+using CustomersService.Presentation.Configuration;
 using CustomersService.Presentation.Models.Requests;
 using CustomersService.Presentation.Models.Responses;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace CustomersService.Presentation.Controllers;
 
 [ApiController]
 [Route("api/customers")]
+[Authorize]
 public class CustomerController(
-        ICustomerService customerService, 
-        IMapper mapper,
-        ILogger<CustomerController> logger
-    ) : ControllerBase
+        ICustomerService customerService,
+        IAccountService accountService,
+        IMapper mapper) : ControllerBase
 {
-
-    [HttpPost]
+    [HttpPost, AllowAnonymous]
     public async Task<ActionResult<Guid>> RegisterAsync([FromBody] RegisterCustomerRequest request)
     {
         var registrationModel = mapper.Map<CustomerRegistrationModel>(request);
@@ -25,14 +26,15 @@ public class CustomerController(
         return Ok(id);
     }
 
-    [HttpPost("login")]
-    public async Task<ActionResult<string>> LoginAsync([FromBody] LoginRequest request)
+    [HttpPost("login"), AllowAnonymous]
+    public async Task<ActionResult<string>> AuthenticateAsync([FromBody] LoginRequest request)
     {
-        var token = string.Empty;
+        var token = await customerService.AuthenticateAsync(request.Email.ToLower(), request.Password);
         return Ok(token);
     }
 
     [HttpGet]
+    [CustomAuthorize([Role.Admin])]
     public async Task<ActionResult<List<CustomerResponse>>> GetAllAsync([FromQuery] int? pageNumber, [FromQuery] int? pageSize)
     {
         var customerModels = await customerService.GetAllAsync(pageNumber, pageSize);
@@ -48,9 +50,29 @@ public class CustomerController(
         return Ok(customer);
     }
 
+
+    [HttpGet("{id}/accounts")]
+    public async Task<ActionResult<List<AccountResponse>>> GetAccountsByCustomerIdAsync([FromRoute] Guid id)
+    {
+        var customerId = this.GetCustomerIdFromClaims();
+        var customerRole = this.GetCustomerRoleFromClaims();
+
+        if (customerRole != Role.Admin && id != customerId)
+            return Forbid();
+
+        var accounts = await accountService.GetAllByCustomerIdAsync(id);
+        var response = mapper.Map<List<AccountResponse>>(accounts);
+        return Ok(response);
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProfileAsync([FromRoute] Guid id, [FromBody] CustomerUpdateRequest request)
     {
+        var customerId = this.GetCustomerIdFromClaims();
+
+        if (id != customerId)
+            return Forbid();
+
         var customerUpdateModel = mapper.Map<CustomerUpdateModel>(request);
         await customerService.UpdateProfileAsync(id, customerUpdateModel);
         return NoContent();
@@ -59,11 +81,17 @@ public class CustomerController(
     [HttpPatch("{id}/password")]
     public async Task<IActionResult> UpdatePasswordAsync([FromRoute] Guid id, [FromBody] PasswordUpdateRequest request)
     {
+        var customerId = this.GetCustomerIdFromClaims();
+
+        if (id != customerId)
+            return Forbid();
+
         await customerService.UpdatePasswordAsync(id, request.NewPassword, request.CurrentPassword);
         return NoContent();
     }
 
     [HttpPatch("{id}/vip")]
+    [CustomAuthorize([Role.Admin])]
     public async Task<IActionResult> SetVipAsync([FromRoute] Guid id, [FromBody] SetVipRequest request)
     {
         await customerService.SetManualVipAsync(id, request.VipExpirationDate);
@@ -71,6 +99,7 @@ public class CustomerController(
     }
 
     [HttpPatch("{id}/activate")]
+    [CustomAuthorize([Role.Admin])]
     public async Task<IActionResult> ActivateAsync([FromRoute] Guid id)
     {
         await customerService.ActivateAsync(id);
@@ -78,6 +107,7 @@ public class CustomerController(
     }
 
     [HttpPatch("{id}/deactivate")]
+    [CustomAuthorize([Role.Admin])]
     public async Task<IActionResult> DeactivateAsync([FromRoute] Guid id)
     {
         await customerService.DeactivateAsync(id);

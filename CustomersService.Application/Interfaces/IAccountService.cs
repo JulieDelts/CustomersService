@@ -1,6 +1,6 @@
 ﻿
 using CustomersService.Application.Models;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Responses;
 
 namespace CustomersService.Application.Interfaces
 {
@@ -10,7 +10,7 @@ namespace CustomersService.Application.Interfaces
         Task<Guid> CreateAsync(AccountCreationModel accountToCreate);
         Task DeactivateAsync(Guid id);
         Task<List<AccountInfoModel>> GetAllByCustomerIdAsync(Guid customerId);
-        Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id);
-        Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id);
+        Task<AccountFullInfoModel> GetFullInfoByIdAsync(Guid id, Guid customerId);
+        Task<List<TransactionResponse>> GetTransactionsByAccountIdAsync(Guid id, Guid customerId);
     }
 }
