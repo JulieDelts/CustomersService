@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Presentation.Configuration;
 using CustomersService.Presentation.Models.Requests;

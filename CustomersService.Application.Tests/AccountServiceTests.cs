@@ -8,7 +8,7 @@ using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Application.Tests.TestCases;
 using CustomersService.Core;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
@@ -52,7 +52,7 @@ namespace CustomersService.Application.Tests
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _accountServiceLoggerMock.Object,
                 _commonHttpClientMock.Object,
-                new Mock<IOptions<TransactionStoreAPIConnectionStrings>>().Object
+                new Mock<IOptions<TransactionStoreApiConnectionStrings>>().Object
             );
         }
 
@@ -171,13 +171,13 @@ namespace CustomersService.Application.Tests
 
         [Theory]
         [MemberData(nameof(AccountServiceTestCases.CustomerAccounts), MemberType = typeof(AccountServiceTestCases))]
-        public void GetAllByCustomerIdAsync_ValidModel_MappingSuccess(List<Account> accountDTOs)
+        public void GetAllByCustomerIdAsync_ValidModel_MappingSuccess(List<Account> accountDtos)
         {
             //Act
-            var accounts = _mapper.Map<List<AccountInfoModel>>(accountDTOs);
+            var accounts = _mapper.Map<List<AccountInfoModel>>(accountDtos);
 
             //Assert
-            accounts.Should().BeEquivalentTo(accountDTOs, options => options.ExcludingMissingMembers());
+            accounts.Should().BeEquivalentTo(accountDtos, options => options.ExcludingMissingMembers());
         }
 
         [Fact]
@@ -213,13 +213,13 @@ namespace CustomersService.Application.Tests
 
         [Theory]
         [MemberData(nameof(AccountServiceTestCases.AccountWithFullInfo), MemberType = typeof(AccountServiceTestCases))]
-        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Account accountDTO)
+        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Account accountDto)
         {
             //Act 
-            var account = _mapper.Map<AccountFullInfoModel>(accountDTO);
+            var account = _mapper.Map<AccountFullInfoModel>(accountDto);
 
             //Assert
-            account.Should().BeEquivalentTo(accountDTO, options => options.ExcludingMissingMembers());
+            account.Should().BeEquivalentTo(accountDto, options => options.ExcludingMissingMembers());
         }
 
         [Fact]
@@ -240,6 +240,7 @@ namespace CustomersService.Application.Tests
                     TransactionType = TransactionType.Deposit
                 }
             };
+            _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);
             _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<List<TransactionResponse>>($"{null}/{accountId}/transactions")).ReturnsAsync(transactions);
 
             //Act 

@@ -14,8 +14,6 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using CustomersService.Core;
-using Castle.Core.Resource;
-using System.Security.Principal;
 
 namespace CustomersService.Application.Tests
 {
@@ -139,6 +137,22 @@ namespace CustomersService.Application.Tests
         }
 
         [Fact]
+        public async Task AuthenticateAsync_ValidCredentials_AuthenticateSuccess()
+        {
+            // Arrange
+            var email = "email";
+            var password = "password";
+            var customer = new Customer() { Id = Guid.NewGuid(), Role = Role.Regular, Email = email, Password = BCrypt.Net.BCrypt.EnhancedHashPassword(password) };
+            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Email == email)).ReturnsAsync(customer);
+
+            // Act
+           var result = await _sut.AuthenticateAsync(email, password);
+
+            // Assert
+            Assert.True(!string.IsNullOrEmpty(result));
+        }
+
+        [Fact]
         public async Task AuthenticateAsync_InvalidLogin_WrongCredentialsExceptionThrown()
         {
             // Arrange
@@ -191,24 +205,24 @@ namespace CustomersService.Application.Tests
 
         [Theory]
         [MemberData(nameof(CustomerServiceTestCases.Customers), MemberType = typeof(CustomerServiceTestCases))]
-        public void GetAllAsync_ValidModel_MappingSuccess(List<Customer> customerDTOs)
+        public void GetAllAsync_ValidModel_MappingSuccess(List<Customer> customerDtos)
         {
             //Act
-            var customers = _mapper.Map<List<CustomerInfoModel>>(customerDTOs);
+            var customers = _mapper.Map<List<CustomerInfoModel>>(customerDtos);
 
             //Assert
-            customers.Should().BeEquivalentTo(customerDTOs, options => options.ExcludingMissingMembers());
+            customers.Should().BeEquivalentTo(customerDtos, options => options.ExcludingMissingMembers());
         }
 
         [Theory]
         [MemberData(nameof(CustomerServiceTestCases.CustomerWithFullInfo), MemberType = typeof(CustomerServiceTestCases))]
-        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Customer customerDTO)
+        public void GetFullInfoByIdAsync_ValidModel_MappingSuccess(Customer customerDto)
         {
             //Act 
-            var customer = _mapper.Map<CustomerFullInfoModel>(customerDTO);
+            var customer = _mapper.Map<CustomerFullInfoModel>(customerDto);
 
             //Assert
-            customer.Should().BeEquivalentTo(customerDTO, options => options.ExcludingMissingMembers());
+            customer.Should().BeEquivalentTo(customerDto, options => options.ExcludingMissingMembers());
         }
 
         [Fact]

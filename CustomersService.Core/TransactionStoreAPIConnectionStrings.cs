@@ -1,7 +1,7 @@
 ﻿
 namespace CustomersService.Core
 {
-    public class TransactionStoreAPIConnectionStrings
+    public class TransactionStoreApiConnectionStrings
     {
         public string BaseUrl { get; set; }
         public string Accounts { get; set; }

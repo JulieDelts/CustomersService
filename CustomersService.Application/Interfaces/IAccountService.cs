@@ -1,6 +1,6 @@
 ﻿
 using CustomersService.Application.Models;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Responses;
 
 namespace CustomersService.Application.Interfaces
 {

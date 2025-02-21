@@ -95,7 +95,7 @@ namespace CustomersService.Presentation.Configuration
 
         private async Task HandleClaimsRetrievalExceptionAsync(HttpContext context, Exception exception)
         {
-            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             await WriteErrorDetailsAsync(context, exception.Message);
         }
 

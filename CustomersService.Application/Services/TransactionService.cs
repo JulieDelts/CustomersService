@@ -1,11 +1,10 @@
 
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Interfaces;
-using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
-using CustomersService.Core.DTOs.Requests;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Requests;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,7 +16,7 @@ public class TransactionService(
         AccountUtils accountUtils,
         ILogger<TransactionService> logger,
         ICommonHttpClient httpClient,
-        IOptions<TransactionStoreAPIConnectionStrings> options)
+        IOptions<TransactionStoreApiConnectionStrings> options)
     : ITransactionService
 {
     private readonly string controllerPath = options.Value?.Transactions;
@@ -51,9 +50,9 @@ public class TransactionService(
     {
         logger.LogInformation("Creating transfer transaction from account {FromAccountId} to account {ToAccountId}", requestModel.FromAccountId, requestModel.ToAccountId);
 
-        var request = await ValidateTransferTransactionRequestAsync(requestModel, customerId);
+        await ValidateTransferTransactionRequestAsync(requestModel, customerId);
 
-        var transactionIds = await httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{controllerPath}/transfer", request);
+        var transactionIds = await httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{controllerPath}/transfer", requestModel);
         logger.LogInformation("Successfully created transfer transactions with IDs {TransactionIds}", transactionIds);
         return transactionIds;
     }
@@ -89,7 +88,7 @@ public class TransactionService(
         }
     }
 
-    private async Task<CreateTransferTransactionRequest> ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
+    private async Task ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
     {
         var fromAccount = await accountUtils.GetByIdAsync(requestModel.FromAccountId);
 
@@ -130,8 +129,6 @@ public class TransactionService(
 
         requestModel.ToCurrency = toAccount.Currency;
         requestModel.FromCurrency = fromAccount.Currency;
-
-        return requestModel;
     }
 }
 

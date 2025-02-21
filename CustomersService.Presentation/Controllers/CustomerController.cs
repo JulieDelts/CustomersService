@@ -29,7 +29,7 @@ public class CustomerController(
     [HttpPost("login"), AllowAnonymous]
     public async Task<ActionResult<string>> AuthenticateAsync([FromBody] LoginRequest request)
     {
-        var token = await customerService.AuthenticateAsync(request.Email, request.Password);
+        var token = await customerService.AuthenticateAsync(request.Email.ToLower(), request.Password);
         return Ok(token);
     }
 

@@ -1,4 +1,4 @@
-﻿namespace CustomersService.Core.DTOs.Responses;
+﻿namespace CustomersService.Core.IntegrationModels.Responses;
 
 public class BalanceResponse
 {

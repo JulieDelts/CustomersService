@@ -1,4 +1,4 @@
-﻿namespace CustomersService.Core.DTOs.Requests;
+﻿namespace CustomersService.Core.IntegrationModels.Requests;
 
 public class CreateTransactionRequest
 {

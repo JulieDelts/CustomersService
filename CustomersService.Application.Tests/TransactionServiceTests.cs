@@ -6,8 +6,8 @@ using CustomersService.Application.Models;
 using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
-using CustomersService.Core.DTOs.Requests;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Requests;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
@@ -41,7 +41,7 @@ namespace CustomersService.Application.Tests
                 new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
                 _transactionServiceLoggerMock.Object,
                 _commonHttpClientMock.Object,
-                new Mock<IOptions<TransactionStoreAPIConnectionStrings>>().Object);
+                new Mock<IOptions<TransactionStoreApiConnectionStrings>>().Object);
         }
 
         [Fact]

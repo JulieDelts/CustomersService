@@ -25,7 +25,7 @@ namespace CustomersService.Application.Tests.TestCases
 
         public static IEnumerable<object[]> Customers()
         {
-            var customerDTOs = new List<Customer>()
+            var customerDtos = new List<Customer>()
             {
                new Customer() { Id = Guid.NewGuid(), Phone = "TestPhone1", Address = "TestAddress1", 
                    BirthDate = DateOnly.MinValue, FirstName = "TestFirstName1", LastName = "TestLastName1" },
@@ -35,12 +35,12 @@ namespace CustomersService.Application.Tests.TestCases
                    BirthDate = DateOnly.MinValue, FirstName = "TestFirstName3", LastName = "TestLastName3" },
             };
 
-            yield return new object[] { customerDTOs };
+            yield return new object[] { customerDtos };
         }
 
         public static IEnumerable<object[]> CustomerWithFullInfo()
         {
-            var customerDTO = new Customer()
+            var customerDto = new Customer()
             {
                 Id = Guid.NewGuid(),
                 Phone = "TestPhone1",
@@ -52,7 +52,7 @@ namespace CustomersService.Application.Tests.TestCases
                 Role = Role.Regular
             };
 
-            yield return new object[] { customerDTO };
+            yield return new object[] { customerDto };
         }
 
         public static IEnumerable<object[]> CustomerToUpdate()

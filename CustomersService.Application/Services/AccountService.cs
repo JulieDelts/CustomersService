@@ -5,7 +5,7 @@ using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
-using CustomersService.Core.DTOs.Responses;
+using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
@@ -21,7 +21,7 @@ public class AccountService(
         AccountUtils accountUtils,
         ILogger<AccountService> logger,
         ICommonHttpClient httpClient,
-        IOptions<TransactionStoreAPIConnectionStrings> options) 
+        IOptions<TransactionStoreApiConnectionStrings> options) 
     : IAccountService
 {
     private readonly string controllerPath = options.Value?.Accounts;
@@ -30,52 +30,52 @@ public class AccountService(
     {
         logger.LogInformation("Creating account for customer {CustomerId}", accountToCreate.CustomerId);
 
-        var customerDTO = await customerUtils.GetByIdAsync(accountToCreate.CustomerId);
+        var customerDto = await customerUtils.GetByIdAsync(accountToCreate.CustomerId);
 
-        if (customerDTO.Role == Role.Admin || customerDTO.Role == Role.Unknown)
+        if (customerDto.Role == Role.Admin || customerDto.Role == Role.Unknown)
         {
-            logger.LogError("Customer with id {CustomerId} has an invalid role {Role}", accountToCreate.CustomerId, customerDTO.Role);
+            logger.LogError("Customer with id {CustomerId} has an invalid role {Role}", accountToCreate.CustomerId, customerDto.Role);
             throw new EntityConflictException($"Role of customer with id {accountToCreate.CustomerId} is not correct.");
         }
 
-        if (customerDTO.IsDeactivated)
+        if (customerDto.IsDeactivated)
         {
             logger.LogWarning("Customer with id {CustomerId} is deactivated", accountToCreate.CustomerId);
             throw new EntityConflictException($"Customer with id {accountToCreate.CustomerId} is deactivated.");
         }
 
-        var accountDTO = await accountRepository.GetByConditionAsync(a =>
+        var accountDto = await accountRepository.GetByConditionAsync(a =>
         a.Currency == accountToCreate.Currency && a.CustomerId == accountToCreate.CustomerId);
 
-        if (accountDTO != null)
+        if (accountDto != null)
         {
             logger.LogWarning("Customer with id {CustomerId} already has an account with currency {Currency}", accountToCreate.CustomerId, accountToCreate.Currency);
             throw new EntityConflictException($"Customer with id {accountToCreate.CustomerId} already has an account with currency {accountToCreate.Currency}.");
         }
 
-        if (customerDTO.Role == Role.Regular
+        if (customerDto.Role == Role.Regular
             && accountToCreate.Currency != Currency.USD
             && accountToCreate.Currency != Currency.EUR)
         {
-            logger.LogError("Customer with role {Role} cannot have an account with currency {Currency}", customerDTO.Role, accountToCreate.Currency);
-            throw new EntityConflictException($"Customer with role {customerDTO.Role} cannot have an account with this currency.");
+            logger.LogError("Customer with role {Role} cannot have an account with currency {Currency}", customerDto.Role, accountToCreate.Currency);
+            throw new EntityConflictException($"Customer with role {customerDto.Role} cannot have an account with this currency.");
         }
 
-        var accountToCreateDTO = mapper.Map<Account>(accountToCreate);
-        accountToCreateDTO.Customer = customerDTO;
+        var accountToCreateDto = mapper.Map<Account>(accountToCreate);
+        accountToCreateDto.Customer = customerDto;
 
-        await accountRepository.CreateAsync(accountToCreateDTO);
-        logger.LogInformation("Account created successfully with ID {AccountId}", accountToCreateDTO.Id);
+        await accountRepository.CreateAsync(accountToCreateDto);
+        logger.LogInformation("Account created successfully with ID {AccountId}", accountToCreateDto.Id);
 
-        return accountToCreateDTO.Id;
+        return accountToCreateDto.Id;
     }
 
     public async Task<List<AccountInfoModel>> GetAllByCustomerIdAsync(Guid customerId)
     {
         logger.LogInformation("Retrieving all accounts for customer {CustomerId}", customerId);
 
-        var accountDTOs = await accountRepository.GetAllByConditionAsync(a => a.CustomerId == customerId);
-        var accounts = mapper.Map<List<AccountInfoModel>>(accountDTOs);
+        var accountDtos = await accountRepository.GetAllByConditionAsync(a => a.CustomerId == customerId);
+        var accounts = mapper.Map<List<AccountInfoModel>>(accountDtos);
 
         logger.LogInformation("Successfully retrieved {Count} accounts for customer {CustomerId}", accounts.Count, customerId);
         return accounts;
@@ -85,15 +85,15 @@ public class AccountService(
     {
         logger.LogInformation("Retrieving full account info for account {AccountId}", id);
 
-        var accountDTO = await accountUtils.GetByIdAsync(id);
+        var accountDto = await accountUtils.GetByIdAsync(id);
 
-        if (accountDTO.CustomerId != customerId)
+        if (accountDto.CustomerId != customerId)
         {
             logger.LogWarning("Customers are only allowed to see their own account info {accountId}.", id);
             throw new AuthorizationFailedException("Customers are only allowed to see their own account info.");
         }
 
-        var account = mapper.Map<AccountFullInfoModel>(accountDTO);
+        var account = mapper.Map<AccountFullInfoModel>(accountDto);
         var accountBalanceModel = await httpClient.SendGetRequestAsync<BalanceResponse>($"{controllerPath}/{id}/balance");
         account.Balance = accountBalanceModel.Balance;
         logger.LogInformation("Successfully retrieved full account info for account {AccountId}", id);
@@ -105,9 +105,9 @@ public class AccountService(
     {
         logger.LogInformation("Retrieving transactions for account {AccountId}", id);
 
-        var accountDTO = await accountUtils.GetByIdAsync(id);
+        var accountDto = await accountUtils.GetByIdAsync(id);
 
-        if (accountDTO.CustomerId != customerId)
+        if (accountDto.CustomerId != customerId)
         {
             logger.LogWarning("Customers are only allowed to see their own account info {accountId}.", id);
             throw new AuthorizationFailedException("Customers are only allowed to see their own account info.");
@@ -123,14 +123,14 @@ public class AccountService(
     {
         logger.LogInformation("Deactivating account {AccountId}", id);
 
-        var accountDTO = await accountUtils.GetByIdAsync(id);
-        if (accountDTO.Currency == Currency.RUB)
+        var accountDto = await accountUtils.GetByIdAsync(id);
+        if (accountDto.Currency == Currency.RUB)
         {
             logger.LogWarning("Account with currency {Currency} cannot be deactivated", Currency.RUB);
             throw new EntityConflictException($"Account with currency {Currency.RUB} cannot be deactivated.");
         }
 
-        await accountRepository.DeactivateAsync(accountDTO);
+        await accountRepository.DeactivateAsync(accountDto);
         logger.LogInformation("Successfully deactivated account {AccountId}", id);
     }
 
@@ -138,8 +138,8 @@ public class AccountService(
     {
         logger.LogInformation("Activating account {AccountId}", id);
 
-        var accountDTO = await accountUtils.GetByIdAsync(id);
-        await accountRepository.ActivateAsync(accountDTO);
+        var accountDto = await accountUtils.GetByIdAsync(id);
+        await accountRepository.ActivateAsync(accountDto);
         logger.LogInformation("Successfully activated account {AccountId}", id);
     }
 }

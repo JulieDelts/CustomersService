@@ -64,7 +64,7 @@ namespace CustomersService.Presentation.Tests.TestCases
                 Phone = "89121234567",
                 Address = "TestAddress",
                 BirthDate = DateOnly.MinValue,
-                Email = "TestEmail",
+                Email = "testemail",
                 Password = "TestPassword"
             };
 

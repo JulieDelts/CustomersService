@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using CustomersService.Core.DTOs.Requests;
+using CustomersService.Core.IntegrationModels.Requests;
 using CustomersService.Presentation.Models.Requests;
 
 namespace CustomersService.Presentation.Mappings

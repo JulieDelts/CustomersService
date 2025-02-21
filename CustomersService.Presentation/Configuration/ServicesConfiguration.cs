@@ -14,7 +14,7 @@ namespace CustomersService.Presentation.Configuration
             services.AddSwaggerGen();
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
-            services.AddOptions<TransactionStoreAPIConnectionStrings>()
+            services.AddOptions<TransactionStoreApiConnectionStrings>()
                 .Configure<IConfiguration>((options, configuration) =>
                 {
                     var section = configuration.GetSection("TransactionStoreApiConnectionStrings");

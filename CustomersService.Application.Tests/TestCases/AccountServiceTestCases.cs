@@ -22,7 +22,7 @@ namespace CustomersService.Application.Tests.TestCases
         {
             var customerId = Guid.NewGuid();
 
-            var accountDTOs = new List<Account>()
+            var accountDtos = new List<Account>()
             {
                 new Account { CustomerId = customerId, Currency = Currency.RUB },
                 new Account { CustomerId = customerId, Currency = Currency.USD },
@@ -30,12 +30,12 @@ namespace CustomersService.Application.Tests.TestCases
                
             };
 
-            yield return new object[] { accountDTOs };
+            yield return new object[] { accountDtos };
         }
 
         public static IEnumerable<object[]> AccountWithFullInfo()
         {
-            var accountDTO = new Account()
+            var accountDto = new Account()
             {
                 Id = Guid.NewGuid(),
                 Currency = Currency.USD,
@@ -44,7 +44,7 @@ namespace CustomersService.Application.Tests.TestCases
                 IsDeactivated = false
             };
 
-            yield return new object[] { accountDTO };
+            yield return new object[] { accountDto };
         }
     }
 }
