@@ -1,6 +1,4 @@
-﻿
-namespace CustomersService.Application.Exceptions
-{
-    public class AuthorizationFailedException(string message) : Exception(message)
-    {}
-}
+﻿namespace CustomersService.Application.Exceptions;
+
+public class AuthorizationFailedException(string message) : Exception(message)
+{}

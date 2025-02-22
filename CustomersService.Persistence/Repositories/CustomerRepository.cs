@@ -1,8 +1,8 @@
-﻿using CustomersService.Core.Enum;
-using CustomersService.Persistence.Entities;
+﻿using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MYPBackendMicroserviceIntegrations.Enums;
 using Npgsql;
 using NpgsqlTypes;
 

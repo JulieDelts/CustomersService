@@ -1,50 +1,48 @@
-﻿
-using CustomersService.Application.Models;
-using CustomersService.Core.Enum;
+﻿using CustomersService.Application.Models;
 using CustomersService.Persistence.Entities;
+using MYPBackendMicroserviceIntegrations.Enums;
 
-namespace CustomersService.Application.Tests.TestCases
+namespace CustomersService.Application.Tests.TestCases;
+
+public static class AccountServiceTestCases
 {
-    public static class AccountServiceTestCases
+    public static IEnumerable<object[]> AccountToCreate()
     {
-        public static IEnumerable<object[]> AccountToCreate()
+        var accountModel = new AccountCreationModel()
         {
-            var accountModel = new AccountCreationModel()
-            {
-                Currency = Currency.USD,
-                CustomerId = Guid.NewGuid()
-            };
+            Currency = Currency.USD,
+            CustomerId = Guid.NewGuid()
+        };
 
-            yield return new object[] { accountModel };
-        }
+        yield return new object[] { accountModel };
+    }
 
-        public static IEnumerable<object[]> CustomerAccounts()
+    public static IEnumerable<object[]> CustomerAccounts()
+    {
+        var customerId = Guid.NewGuid();
+
+        var accountDtos = new List<Account>()
         {
-            var customerId = Guid.NewGuid();
+            new Account { CustomerId = customerId, Currency = Currency.RUB },
+            new Account { CustomerId = customerId, Currency = Currency.USD },
+            new Account { CustomerId = customerId, Currency = Currency.JPY },
+           
+        };
 
-            var accountDtos = new List<Account>()
-            {
-                new Account { CustomerId = customerId, Currency = Currency.RUB },
-                new Account { CustomerId = customerId, Currency = Currency.USD },
-                new Account { CustomerId = customerId, Currency = Currency.JPY },
-               
-            };
+        yield return new object[] { accountDtos };
+    }
 
-            yield return new object[] { accountDtos };
-        }
-
-        public static IEnumerable<object[]> AccountWithFullInfo()
+    public static IEnumerable<object[]> AccountWithFullInfo()
+    {
+        var accountDto = new Account()
         {
-            var accountDto = new Account()
-            {
-                Id = Guid.NewGuid(),
-                Currency = Currency.USD,
-                CustomerId = Guid.NewGuid(),
-                DateCreated = DateTime.Now,
-                IsDeactivated = false
-            };
+            Id = Guid.NewGuid(),
+            Currency = Currency.USD,
+            CustomerId = Guid.NewGuid(),
+            DateCreated = DateTime.Now,
+            IsDeactivated = false
+        };
 
-            yield return new object[] { accountDto };
-        }
+        yield return new object[] { accountDto };
     }
 }

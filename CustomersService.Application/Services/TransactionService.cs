@@ -1,13 +1,12 @@
-
 using CustomersService.Application.Exceptions;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
 using CustomersService.Core.IntegrationModels.Requests;
 using CustomersService.Core.IntegrationModels.Responses;
-using CustomersService.Core.Enum;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Application.Services;
 

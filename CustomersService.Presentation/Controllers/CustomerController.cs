@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
-using CustomersService.Core.Enum;
 using CustomersService.Presentation.Configuration;
 using CustomersService.Presentation.Models.Requests;
 using CustomersService.Presentation.Models.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Presentation.Controllers;
 
@@ -49,7 +49,6 @@ public class CustomerController(
         var customer = mapper.Map<CustomerFullResponse>(customerModel);
         return Ok(customer);
     }
-
 
     [HttpGet("{id}/accounts")]
     public async Task<ActionResult<List<AccountResponse>>> GetAccountsByCustomerIdAsync([FromRoute] Guid id)

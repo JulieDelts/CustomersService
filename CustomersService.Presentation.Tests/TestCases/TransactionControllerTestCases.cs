@@ -1,31 +1,29 @@
-﻿
-using CustomersService.Presentation.Models.Requests;
+﻿using CustomersService.Presentation.Models.Requests;
 
-namespace CustomersService.Presentation.Tests.TestCases
+namespace CustomersService.Presentation.Tests.TestCases;
+
+public class TransactionControllerTestCases
 {
-    public class TransactionControllerTestCases
+    public static IEnumerable<object[]> SimpleTransaction()
     {
-        public static IEnumerable<object[]> SimpleTransaction()
+        var transaction = new TransactionCreateRequest()
         {
-            var transaction = new TransactionCreateRequest()
-            {
-                AccountId = Guid.NewGuid(),
-                Amount = 100
-            };
+            AccountId = Guid.NewGuid(),
+            Amount = 100
+        };
 
-            yield return new object[] { transaction };
-        }
+        yield return new object[] { transaction };
+    }
 
-        public static IEnumerable<object[]> TransferTransaction()
+    public static IEnumerable<object[]> TransferTransaction()
+    {
+        var transaction = new TransferTransactionCreateRequest()
         {
-            var transaction = new TransferTransactionCreateRequest()
-            {
-                FromAccountId = Guid.NewGuid(),
-                ToAccountId = Guid.NewGuid(),
-                Amount = 100
-            };
+            FromAccountId = Guid.NewGuid(),
+            ToAccountId = Guid.NewGuid(),
+            Amount = 100
+        };
 
-            yield return new object[] { transaction };
-        }
+        yield return new object[] { transaction };
     }
 }

@@ -1,5 +1,4 @@
-﻿
-using CustomersService.Application.Exceptions;
+﻿using CustomersService.Application.Exceptions;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using Microsoft.Extensions.Logging;

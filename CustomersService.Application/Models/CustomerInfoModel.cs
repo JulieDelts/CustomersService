@@ -1,13 +1,11 @@
-﻿
-namespace CustomersService.Application.Models
+﻿namespace CustomersService.Application.Models;
+
+public class CustomerInfoModel
 {
-    public class CustomerInfoModel
-    {
-        public Guid Id { get; set; }
-        public string Phone { get; set; }
-        public string Address { get; set; }
-        public DateOnly BirthDate { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-    }
+    public Guid Id { get; set; }
+    public string Phone { get; set; }
+    public string Address { get; set; }
+    public DateOnly BirthDate { get; set; }
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
 }

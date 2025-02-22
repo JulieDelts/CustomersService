@@ -1,5 +1,4 @@
-﻿
-using CustomersService.Application.Exceptions;
+﻿using CustomersService.Application.Exceptions;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
 using CustomersService.Persistence.Entities;
@@ -8,53 +7,52 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace CustomersService.Application.Tests.ServicesUtilsTests
+namespace CustomersService.Application.Tests.ServicesUtilsTests;
+
+public class CustomerUtilsTests
 {
-    public class CustomerUtilsTests
+    private readonly Mock<ICustomerRepository> _customerRepositoryMock;
+    private readonly Mock<ILogger<CustomerUtils>> _loggerMock;
+    private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
+    private readonly CustomerUtils _sut;
+
+    public CustomerUtilsTests()
     {
-        private readonly Mock<ICustomerRepository> _customerRepositoryMock;
-        private readonly Mock<ILogger<CustomerUtils>> _loggerMock;
-        private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
-        private readonly CustomerUtils _sut;
+        _customerRepositoryMock = new();
+        _authConfigOptionsMock = new();
+        _loggerMock = new();
+        _sut = new(_customerRepositoryMock.Object, _loggerMock.Object, _authConfigOptionsMock.Object);
+    }
 
-        public CustomerUtilsTests()
-        {
-            _customerRepositoryMock = new();
-            _authConfigOptionsMock = new();
-            _loggerMock = new();
-            _sut = new(_customerRepositoryMock.Object, _loggerMock.Object, _authConfigOptionsMock.Object);
-        }
+    [Fact]
+    public async Task GetByIdAsync_ExistingCustomer_GetSuccess()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var customer = new Customer() { Id = customerId };
+        _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
 
-        [Fact]
-        public async Task GetByIdAsync_ExistingCustomer_GetSuccess()
-        {
-            // Arrange
-            var customerId = Guid.NewGuid();
-            var customer = new Customer() { Id = customerId };
-            _customerRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == customerId)).ReturnsAsync(customer);
+        // Act
+        await _sut.GetByIdAsync(customerId);
 
-            // Act
-            await _sut.GetByIdAsync(customerId);
+        // Assert
+        _customerRepositoryMock.Verify(t =>
+            t.GetByConditionAsync(c => c.Id == customerId),
+            Times.Once
+        );
+    }
 
-            // Assert
-            _customerRepositoryMock.Verify(t =>
-                t.GetByConditionAsync(c => c.Id == customerId),
-                Times.Once
-            );
-        }
+    [Fact]
+    public async Task GetByIdAsync_NotExistingCustomer_EntityNotFoundExceptionThrown()
+    {
+        // Arrange
+        var customerId = Guid.NewGuid();
+        var message = $"Customer with id {customerId} was not found.";
 
-        [Fact]
-        public async Task GetByIdAsync_NotExistingCustomer_EntityNotFoundExceptionThrown()
-        {
-            // Arrange
-            var customerId = Guid.NewGuid();
-            var message = $"Customer with id {customerId} was not found.";
+        // Act
+        var exception = await Assert.ThrowsAsync<EntityNotFoundException>(async () => await _sut.GetByIdAsync(customerId));
 
-            // Act
-            var exception = await Assert.ThrowsAsync<EntityNotFoundException>(async () => await _sut.GetByIdAsync(customerId));
-
-            // Assert
-            Assert.Equal(message, exception.Message);
-        }
+        // Assert
+        Assert.Equal(message, exception.Message);
     }
 }

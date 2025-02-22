@@ -3,10 +3,10 @@ using CustomersService.Application.Exceptions;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
-using CustomersService.Core.Enum;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using Microsoft.Extensions.Logging;
+using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Application.Services;
 

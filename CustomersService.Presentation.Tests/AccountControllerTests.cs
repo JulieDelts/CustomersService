@@ -3,7 +3,6 @@ using AutoMapper;
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Core.IntegrationModels.Responses;
-using CustomersService.Core.Enum;
 using CustomersService.Presentation.Controllers;
 using CustomersService.Presentation.Mappings;
 using CustomersService.Presentation.Models.Requests;
@@ -12,6 +11,7 @@ using CustomersService.Presentation.Tests.TestCases;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Presentation.Tests;
 

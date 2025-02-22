@@ -1,12 +1,11 @@
 ﻿using FluentValidation;
 
-namespace CustomersService.Presentation.Models.Requests.Validators
+namespace CustomersService.Presentation.Models.Requests.Validators;
+
+public class SetVipRequestValidator: AbstractValidator<SetVipRequest>
 {
-    public class SetVipRequestValidator: AbstractValidator<SetVipRequest>
+    public SetVipRequestValidator() 
     {
-        public SetVipRequestValidator() 
-        {
-            RuleFor(model => model.VipExpirationDate).NotEmpty().GreaterThan(DateTime.Now);
-        }
+        RuleFor(model => model.VipExpirationDate).NotEmpty().GreaterThan(DateTime.Now);
     }
 }

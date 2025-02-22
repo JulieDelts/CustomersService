@@ -1,13 +1,12 @@
 ﻿using FluentValidation;
 
-namespace CustomersService.Presentation.Models.Requests.Validators
+namespace CustomersService.Presentation.Models.Requests.Validators;
+
+public class LoginRequestValidator : AbstractValidator<LoginRequest>
 {
-    public class LoginRequestValidator : AbstractValidator<LoginRequest>
+    public LoginRequestValidator()
     {
-        public LoginRequestValidator()
-        {
-            RuleFor(model => model.Email).NotNull().EmailAddress();
-            RuleFor(model => model.Password).NotNull().Length(8, 15);
-        }
+        RuleFor(model => model.Email).NotNull().EmailAddress();
+        RuleFor(model => model.Password).NotNull().Length(8, 15);
     }
 }

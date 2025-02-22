@@ -1,13 +1,12 @@
-﻿using CustomersService.Core.Enum;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
+using MYPBackendMicroserviceIntegrations.Enums;
 
-namespace CustomersService.Presentation.Configuration
+namespace CustomersService.Presentation.Configuration;
+
+public class CustomAuthorizeAttribute: AuthorizeAttribute
 {
-    public class CustomAuthorizeAttribute: AuthorizeAttribute
+    public CustomAuthorizeAttribute(Role[] roles)
     {
-        public CustomAuthorizeAttribute(Role[] roles)
-        {
-            Roles = string.Join(",", roles);
-        }
+        Roles = string.Join(",", roles);
     }
 }

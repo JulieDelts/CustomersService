@@ -1,6 +1,5 @@
-﻿using CustomersService.Core.Enum;
-using System.Text.Json.Serialization;
-
+﻿using System.Text.Json.Serialization;
+using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Core.IntegrationModels.Responses;
 

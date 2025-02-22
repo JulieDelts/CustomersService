@@ -1,5 +1,4 @@
-﻿using CustomersService.Core.Enum;
-using CustomersService.Persistence.Entities;
+﻿using CustomersService.Persistence.Entities;
 
 namespace CustomersService.Persistence.Interfaces
 {
