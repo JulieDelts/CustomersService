@@ -1,11 +1,10 @@
 ﻿using System.Text.Json;
 
-namespace CustomersService.Presentation.Configuration
+namespace CustomersService.Presentation.Configuration;
+
+public class ErrorDetails
 {
-    public class ErrorDetails
-    {
-        public int StatusCode { get; set; }
-        public string Message { get; set; }
-        public override string ToString() => JsonSerializer.Serialize(this);
-    }
+    public int StatusCode { get; set; }
+    public string Message { get; set; }
+    public override string ToString() => JsonSerializer.Serialize(this);
 }

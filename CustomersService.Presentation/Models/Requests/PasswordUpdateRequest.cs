@@ -1,8 +1,7 @@
-﻿namespace CustomersService.Presentation.Models.Requests
+﻿namespace CustomersService.Presentation.Models.Requests;
+
+public class PasswordUpdateRequest
 {
-    public class PasswordUpdateRequest
-    {
-        public string CurrentPassword { get; set; }
-        public string NewPassword { get; set; }
-    }
+    public string CurrentPassword { get; set; }
+    public string NewPassword { get; set; }
 }

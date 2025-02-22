@@ -1,4 +1,4 @@
-﻿using CustomersService.Core.Enum;
+﻿using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Persistence.Entities;
 

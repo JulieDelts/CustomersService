@@ -2,12 +2,12 @@
 using CustomersService.Application.Interfaces;
 using CustomersService.Application.Models;
 using CustomersService.Core.IntegrationModels.Responses;
-using CustomersService.Core.Enum;
 using CustomersService.Presentation.Configuration;
 using CustomersService.Presentation.Models.Requests;
 using CustomersService.Presentation.Models.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Presentation.Controllers;
 

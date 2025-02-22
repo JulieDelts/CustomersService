@@ -1,14 +1,13 @@
 ﻿using FluentValidation;
 
-namespace CustomersService.Presentation.Models.Requests.Validators
+namespace CustomersService.Presentation.Models.Requests.Validators;
+
+public class TransferTransactionCreateRequestValidator: AbstractValidator<TransferTransactionCreateRequest>
 {
-    public class TransferTransactionCreateRequestValidator: AbstractValidator<TransferTransactionCreateRequest>
+    public TransferTransactionCreateRequestValidator() 
     {
-        public TransferTransactionCreateRequestValidator() 
-        {
-            RuleFor(model => model.ToAccountId).NotEmpty();
-            RuleFor(model => model.FromAccountId).NotEmpty();
-            RuleFor(model => model.Amount).NotEmpty().GreaterThan(0);
-        }
+        RuleFor(model => model.ToAccountId).NotEmpty();
+        RuleFor(model => model.FromAccountId).NotEmpty();
+        RuleFor(model => model.Amount).NotEmpty().GreaterThan(0);
     }
 }

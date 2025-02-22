@@ -1,10 +1,10 @@
 ﻿using CustomersService.Application.Models;
-using CustomersService.Core.Enum;
 using CustomersService.Presentation.Models.Requests;
+using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Presentation.Tests.TestCases;
 
-internal static class AccountControllerTestCases
+public static class AccountControllerTestCases
 {
     public static IEnumerable<object[]> AccountToCreate()
     {

@@ -1,7 +1,6 @@
-﻿namespace CustomersService.Presentation.Models.Requests
+﻿namespace CustomersService.Presentation.Models.Requests;
+
+public class SetVipRequest
 {
-    public class SetVipRequest
-    {
-        public DateTime VipExpirationDate { get; set; }
-    }
+    public DateTime VipExpirationDate { get; set; }
 }

@@ -1,14 +1,13 @@
-﻿using CustomersService.Core.Enum;
-using FluentValidation;
+﻿using FluentValidation;
+using MYPBackendMicroserviceIntegrations.Enums;
 
-namespace CustomersService.Presentation.Models.Requests.Validators
+namespace CustomersService.Presentation.Models.Requests.Validators;
+
+public class AccountAddRequestValidator : AbstractValidator<AccountAddRequest>
 {
-    public class AccountAddRequestValidator : AbstractValidator<AccountAddRequest>
+    public AccountAddRequestValidator()
     {
-        public AccountAddRequestValidator()
-        {
-            RuleFor(model => model.CustomerId).NotEmpty();
-            RuleFor(model => model.Currency).NotEmpty().IsInEnum().NotEqual(Currency.Unknown);
-        }
+        RuleFor(model => model.CustomerId).NotEmpty();
+        RuleFor(model => model.Currency).NotEmpty().IsInEnum().NotEqual(Currency.Unknown);
     }
 }

@@ -1,12 +1,10 @@
-﻿
-using CustomersService.Core.Enum;
+﻿using MYPBackendMicroserviceIntegrations.Enums;
 
-namespace CustomersService.Application.Models
+namespace CustomersService.Application.Models;
+
+public class AccountInfoModel
 {
-    public class AccountInfoModel
-    {
-        public Guid Id { get; set; }
-        public bool IsDeactivated { get; set; }
-        public Currency Currency { get; set; }
-    }
+    public Guid Id { get; set; }
+    public bool IsDeactivated { get; set; }
+    public Currency Currency { get; set; }
 }

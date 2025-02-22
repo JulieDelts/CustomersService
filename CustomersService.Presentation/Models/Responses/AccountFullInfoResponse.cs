@@ -1,6 +1,7 @@
-﻿using CustomersService.Core.Enum;
+﻿using MYPBackendMicroserviceIntegrations.Enums;
 
 namespace CustomersService.Presentation.Models.Responses;
+
 public class AccountFullInfoResponse
 {
     public Guid Id { get; set; }

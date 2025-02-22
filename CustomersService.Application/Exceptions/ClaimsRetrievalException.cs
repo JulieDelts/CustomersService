@@ -1,6 +1,4 @@
-﻿
-namespace CustomersService.Application.Exceptions
-{
-    public class ClaimsRetrievalException(string message): Exception(message)
-    {}
-}
+﻿namespace CustomersService.Application.Exceptions;
+
+public class ClaimsRetrievalException(string message): Exception(message)
+{}

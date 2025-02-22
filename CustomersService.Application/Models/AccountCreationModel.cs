@@ -1,11 +1,9 @@
-﻿
-using CustomersService.Core.Enum;
+﻿using MYPBackendMicroserviceIntegrations.Enums;
 
-namespace CustomersService.Application.Models
+namespace CustomersService.Application.Models;
+
+public class AccountCreationModel
 {
-    public class AccountCreationModel
-    {
-        public Guid CustomerId { get; set; }
-        public Currency Currency { get; set; }
-    }
+    public Guid CustomerId { get; set; }
+    public Currency Currency { get; set; }
 }

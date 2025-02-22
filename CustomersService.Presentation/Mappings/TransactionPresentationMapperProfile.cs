@@ -2,14 +2,13 @@
 using CustomersService.Core.IntegrationModels.Requests;
 using CustomersService.Presentation.Models.Requests;
 
-namespace CustomersService.Presentation.Mappings
+namespace CustomersService.Presentation.Mappings;
+
+public class TransactionPresentationMapperProfile: Profile
 {
-    public class TransactionPresentationMapperProfile: Profile
+    public TransactionPresentationMapperProfile() 
     {
-        public TransactionPresentationMapperProfile() 
-        {
-            CreateMap<TransferTransactionCreateRequest, CreateTransferTransactionRequest>();
-            CreateMap<TransactionCreateRequest, CreateTransactionRequest>();
-        }
+        CreateMap<TransferTransactionCreateRequest, CreateTransferTransactionRequest>();
+        CreateMap<TransactionCreateRequest, CreateTransactionRequest>();
     }
 }

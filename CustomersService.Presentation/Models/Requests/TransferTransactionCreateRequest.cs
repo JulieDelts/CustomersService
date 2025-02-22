@@ -1,10 +1,8 @@
-﻿
-namespace CustomersService.Presentation.Models.Requests
+﻿namespace CustomersService.Presentation.Models.Requests;
+
+public class TransferTransactionCreateRequest
 {
-    public class TransferTransactionCreateRequest
-    {
-        public Guid FromAccountId { get; set; }
-        public Guid ToAccountId { get; set; }
-        public decimal Amount { get; set; }
-    }
+    public Guid FromAccountId { get; set; }
+    public Guid ToAccountId { get; set; }
+    public decimal Amount { get; set; }
 }

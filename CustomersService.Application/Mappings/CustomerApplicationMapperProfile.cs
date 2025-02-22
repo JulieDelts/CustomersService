@@ -1,18 +1,16 @@
-﻿
-using AutoMapper;
+﻿using AutoMapper;
 using CustomersService.Application.Models;
 using CustomersService.Persistence.Entities;
 
-namespace CustomersService.Application.Mappings
+namespace CustomersService.Application.Mappings;
+
+public class CustomerApplicationMapperProfile: Profile
 {
-    public class CustomerApplicationMapperProfile: Profile
+    public CustomerApplicationMapperProfile() 
     {
-        public CustomerApplicationMapperProfile() 
-        {
-            CreateMap<CustomerRegistrationModel, Customer>();
-            CreateMap<CustomerUpdateModel, Customer>();
-            CreateMap<Customer, CustomerInfoModel>();
-            CreateMap<Customer, CustomerFullInfoModel>();
-        }
+        CreateMap<CustomerRegistrationModel, Customer>();
+        CreateMap<CustomerUpdateModel, Customer>();
+        CreateMap<Customer, CustomerInfoModel>();
+        CreateMap<Customer, CustomerFullInfoModel>();
     }
 }
