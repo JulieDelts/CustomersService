@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using CustomersService.Core;
 using MYPBackendMicroserviceIntegrations.Enums;
+using MassTransit;
 
 namespace CustomersService.Application.Tests;
 
@@ -22,8 +23,10 @@ public class CustomerServiceTests
     private readonly Mock<ICustomerRepository> _customerRepositoryMock;
     private readonly Mock<ICustomerUnitOfWork> _customerUnitOfWorkMock;
     private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
+    private readonly Mock<ILogger<RabbitMqPublishUtils>> _rabbitMqPublishLoggerMock;
     private readonly Mock<ILogger<CustomerService>> _customerServiceLoggerMock;
     private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
+    private readonly Mock<IPublishEndpoint> _publishEndpointMock;
 
     private readonly Mapper _mapper;
     private readonly CustomerService _sut;
@@ -34,8 +37,10 @@ public class CustomerServiceTests
         _customerRepositoryMock = new();
         _customerUnitOfWorkMock = new();
         _customerUtilsLoggerMock = new();
+        _rabbitMqPublishLoggerMock = new();
         _customerServiceLoggerMock = new();
         _authConfigOptionsMock = new();
+        _publishEndpointMock = new();
         var config = new MapperConfiguration(
         cfg =>
         {
@@ -49,6 +54,8 @@ public class CustomerServiceTests
             new CustomerUtils(_customerRepositoryMock.Object,
             _customerUtilsLoggerMock.Object,
             _authConfigOptionsMock.Object),
+            new RabbitMqPublishUtils(_publishEndpointMock.Object, 
+            _rabbitMqPublishLoggerMock.Object),
             _customerUnitOfWorkMock.Object,
             _customerServiceLoggerMock.Object
         );

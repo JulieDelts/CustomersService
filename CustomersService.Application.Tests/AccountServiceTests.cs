@@ -11,6 +11,7 @@ using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using FluentAssertions;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -25,8 +26,10 @@ public class AccountServiceTests
     private readonly Mapper _mapper;
     private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
     private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
+    private readonly Mock<ILogger<RabbitMqPublishUtils>> _rabbitMqPublishLoggerMock;
     private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
     private readonly Mock<ICommonHttpClient> _commonHttpClientMock;
+    private readonly Mock<IPublishEndpoint> _publishEndpointMock;
     private readonly AccountService _sut;
 
     public AccountServiceTests()
@@ -36,7 +39,9 @@ public class AccountServiceTests
         _customerUtilsLoggerMock = new();
         _accountUtilsLoggerMock = new();
         _accountServiceLoggerMock = new();
+        _rabbitMqPublishLoggerMock = new();
         _commonHttpClientMock = new();
+        _publishEndpointMock = new();
         var config = new MapperConfiguration(
         cfg =>
         {
@@ -49,6 +54,7 @@ public class AccountServiceTests
             _mapper,
             new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object, new Mock<IOptions<AuthConfigOptions>>().Object),
             new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
+            new RabbitMqPublishUtils(_publishEndpointMock.Object, _rabbitMqPublishLoggerMock.Object),
             _accountServiceLoggerMock.Object,
             _commonHttpClientMock.Object,
             new Mock<IOptions<TransactionStoreApiConnectionStrings>>().Object

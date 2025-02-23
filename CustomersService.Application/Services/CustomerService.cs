@@ -15,6 +15,7 @@ public class CustomerService(
         IAccountRepository accountRepository,
         IMapper mapper,
         CustomerUtils customerUtils,
+        RabbitMqPublishUtils rabbitMqUtils,
         ICustomerUnitOfWork customerUnitOfWork,
         ILogger<CustomerService> logger)
     : ICustomerService
@@ -40,6 +41,8 @@ public class CustomerService(
         try
         {
             await customerUnitOfWork.CreateCustomerAsync(customerDto, accountDto);
+            await rabbitMqUtils.PublishCustomerUpdateAsync(customerDto);
+            await rabbitMqUtils.PublishAccountUpdateAsync(accountDto);
             logger.LogInformation("Customer registered successfully with ID {CustomerId}", customerDto.Id);
             return customerDto.Id;
         }
@@ -105,6 +108,7 @@ public class CustomerService(
         var customerUpdateDto = mapper.Map<Customer>(customerUpdateModel);
 
         await customerRepository.UpdateProfileAsync(customerDto, customerUpdateDto);
+        await rabbitMqUtils.PublishCustomerUpdateAsync(customerDto);
         logger.LogInformation("Successfully updated profile for customer {CustomerId}", id);
     }
 
@@ -129,6 +133,7 @@ public class CustomerService(
         var password = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword);
 
         await customerRepository.UpdatePasswordAsync(customerDto, password);
+        await rabbitMqUtils.PublishCustomerUpdateAsync(customerDto);
         logger.LogInformation("Successfully updated password for customer {CustomerId}", id);
     }
 
@@ -153,6 +158,7 @@ public class CustomerService(
         try
         {
             await customerUnitOfWork.SetManualVipAsync(customerDto, vipExpirationDate, accountsToActivate);
+            await rabbitMqUtils.PublishCustomerUpdateAsync(customerDto);
             logger.LogInformation("Successfully set VIP status for customer {CustomerId}", id);
         }
         catch (Exception ex)
@@ -171,6 +177,7 @@ public class CustomerService(
         try
         {
             await customerUnitOfWork.BatchUpdateRoleAsync(vipCustomerIds);
+            await rabbitMqUtils.PublishRoleUpdateIdsAsync(vipCustomerIds);
             logger.LogInformation("Successfully batch updated roles for customers");
         }
         catch (Exception ex)
@@ -188,6 +195,7 @@ public class CustomerService(
         var customerDto = await customerUtils.GetByIdAsync(id);
 
         await customerRepository.DeactivateAsync(customerDto);
+        await rabbitMqUtils.PublishCustomerUpdateAsync(customerDto);
         logger.LogInformation("Successfully deactivated customer {CustomerId}", id);
     }
 
@@ -198,6 +206,7 @@ public class CustomerService(
         var customerDto = await customerUtils.GetByIdAsync(id);
 
         await customerRepository.ActivateAsync(customerDto);
+        await rabbitMqUtils.PublishCustomerUpdateAsync(customerDto);
         logger.LogInformation("Successfully activated customer {CustomerId}", id);
     }
 

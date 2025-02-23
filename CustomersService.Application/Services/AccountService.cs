@@ -18,6 +18,7 @@ public class AccountService(
         IMapper mapper,
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
+         RabbitMqPublishUtils rabbitMqUtils,
         ILogger<AccountService> logger,
         ICommonHttpClient httpClient,
         IOptions<TransactionStoreApiConnectionStrings> options) 
@@ -31,7 +32,7 @@ public class AccountService(
 
         var customerDto = await customerUtils.GetByIdAsync(accountToCreate.CustomerId);
 
-        if (customerDto.Role == Role.Admin || customerDto.Role == Role.Unknown)
+        if (customerDto.Role == Role.Admin)
         {
             logger.LogError("Customer with id {CustomerId} has an invalid role {Role}", accountToCreate.CustomerId, customerDto.Role);
             throw new EntityConflictException($"Role of customer with id {accountToCreate.CustomerId} is not correct.");
@@ -64,6 +65,7 @@ public class AccountService(
         accountToCreateDto.Customer = customerDto;
 
         await accountRepository.CreateAsync(accountToCreateDto);
+        await rabbitMqUtils.PublishAccountUpdateAsync(accountToCreateDto);
         logger.LogInformation("Account created successfully with ID {AccountId}", accountToCreateDto.Id);
 
         return accountToCreateDto.Id;
@@ -130,6 +132,7 @@ public class AccountService(
         }
 
         await accountRepository.DeactivateAsync(accountDto);
+        await rabbitMqUtils.PublishAccountUpdateAsync(accountDto);
         logger.LogInformation("Successfully deactivated account {AccountId}", id);
     }
 
@@ -139,6 +142,7 @@ public class AccountService(
 
         var accountDto = await accountUtils.GetByIdAsync(id);
         await accountRepository.ActivateAsync(accountDto);
+        await rabbitMqUtils.PublishAccountUpdateAsync(accountDto);
         logger.LogInformation("Successfully activated account {AccountId}", id);
     }
 }
