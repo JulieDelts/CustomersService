@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using MYPBackendMicroserviceIntegrations.Enums;
+using MYPBackendMicroserviceIntegrations.Messages;
 
 namespace CustomersService.Application.Tests;
 
@@ -26,7 +27,6 @@ public class AccountServiceTests
     private readonly Mapper _mapper;
     private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
     private readonly Mock<ILogger<AccountUtils>> _accountUtilsLoggerMock;
-    private readonly Mock<ILogger<RabbitMqPublishUtils>> _rabbitMqPublishLoggerMock;
     private readonly Mock<ILogger<AccountService>> _accountServiceLoggerMock;
     private readonly Mock<ICommonHttpClient> _commonHttpClientMock;
     private readonly Mock<IPublishEndpoint> _publishEndpointMock;
@@ -39,7 +39,6 @@ public class AccountServiceTests
         _customerUtilsLoggerMock = new();
         _accountUtilsLoggerMock = new();
         _accountServiceLoggerMock = new();
-        _rabbitMqPublishLoggerMock = new();
         _commonHttpClientMock = new();
         _publishEndpointMock = new();
         var config = new MapperConfiguration(
@@ -54,9 +53,9 @@ public class AccountServiceTests
             _mapper,
             new CustomerUtils(_customerRepositoryMock.Object, _customerUtilsLoggerMock.Object, new Mock<IOptions<AuthConfigOptions>>().Object),
             new AccountUtils(_accountRepositoryMock.Object, _accountUtilsLoggerMock.Object),
-            new RabbitMqPublishUtils(_publishEndpointMock.Object, _rabbitMqPublishLoggerMock.Object),
             _accountServiceLoggerMock.Object,
             _commonHttpClientMock.Object,
+            _publishEndpointMock.Object,
             new Mock<IOptions<TransactionStoreApiConnectionStrings>>().Object
         );
     }
@@ -76,7 +75,11 @@ public class AccountServiceTests
         // Assert
         _accountRepositoryMock.Verify(t =>
             t.CreateAsync(It.Is<Account>(t => t.CustomerId == customerId && t.Customer == customer)),
-            Times.Once
+        Times.Once
+        );
+        _publishEndpointMock.Verify(t =>
+           t.Publish(It.Is<AccountMessage>(t => t.CustomerId == customerId), It.IsAny<CancellationToken>()),
+           Times.Once
         );
     }
 
@@ -274,6 +277,10 @@ public class AccountServiceTests
             t.DeactivateAsync(It.Is<Account>(t => t.Id == accountId)),
             Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+           t.Publish(It.Is<AccountMessage>(t => t.Id == account.Id), It.IsAny<CancellationToken>()),
+           Times.Once
+        );
     }
 
     [Fact]
@@ -306,6 +313,10 @@ public class AccountServiceTests
         _accountRepositoryMock.Verify(t =>
             t.ActivateAsync(It.Is<Account>(t => t.Id == accountId)),
             Times.Once
+        );
+        _publishEndpointMock.Verify(t =>
+           t.Publish(It.Is<AccountMessage>(t => t.Id == account.Id), It.IsAny<CancellationToken>()),
+           Times.Once
         );
     }
 }

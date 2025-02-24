@@ -19,7 +19,6 @@ public static class ServicesConfiguration
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<AccountUtils>();
         services.AddScoped<CustomerUtils>();
-        services.AddScoped<RabbitMqPublishUtils>();
         services.AddOptions<TransactionStoreApiConnectionStrings>()
          .Configure<IConfiguration>((options, configuration) =>
          {

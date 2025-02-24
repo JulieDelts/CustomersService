@@ -14,6 +14,7 @@ using Microsoft.Extensions.Options;
 using CustomersService.Core;
 using MYPBackendMicroserviceIntegrations.Enums;
 using MassTransit;
+using MYPBackendMicroserviceIntegrations.Messages;
 
 namespace CustomersService.Application.Tests;
 
@@ -23,7 +24,6 @@ public class CustomerServiceTests
     private readonly Mock<ICustomerRepository> _customerRepositoryMock;
     private readonly Mock<ICustomerUnitOfWork> _customerUnitOfWorkMock;
     private readonly Mock<ILogger<CustomerUtils>> _customerUtilsLoggerMock;
-    private readonly Mock<ILogger<RabbitMqPublishUtils>> _rabbitMqPublishLoggerMock;
     private readonly Mock<ILogger<CustomerService>> _customerServiceLoggerMock;
     private readonly Mock<IOptions<AuthConfigOptions>> _authConfigOptionsMock;
     private readonly Mock<IPublishEndpoint> _publishEndpointMock;
@@ -37,7 +37,6 @@ public class CustomerServiceTests
         _customerRepositoryMock = new();
         _customerUnitOfWorkMock = new();
         _customerUtilsLoggerMock = new();
-        _rabbitMqPublishLoggerMock = new();
         _customerServiceLoggerMock = new();
         _authConfigOptionsMock = new();
         _publishEndpointMock = new();
@@ -45,6 +44,8 @@ public class CustomerServiceTests
         cfg =>
         {
             cfg.AddProfile(new CustomerApplicationMapperProfile());
+            cfg.AddProfile(new AccountApplicationMapperProfile());
+            
         });
         _mapper = new Mapper(config);
         _sut = new(
@@ -54,9 +55,8 @@ public class CustomerServiceTests
             new CustomerUtils(_customerRepositoryMock.Object,
             _customerUtilsLoggerMock.Object,
             _authConfigOptionsMock.Object),
-            new RabbitMqPublishUtils(_publishEndpointMock.Object, 
-            _rabbitMqPublishLoggerMock.Object),
             _customerUnitOfWorkMock.Object,
+            _publishEndpointMock.Object,
             _customerServiceLoggerMock.Object
         );
     }
@@ -83,6 +83,11 @@ public class CustomerServiceTests
             t.CreateCustomerAsync(It.Is<Customer>(t => t.Email == customer.Email), It.Is<Account>(t => t.Currency == account.Currency)),
             Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+          t.Publish(It.Is<CustomerWithAccountMessage>(t => t.Customer.Email == customer.Email 
+          && t.Account.Currency == account.Currency), It.IsAny<CancellationToken>()),
+          Times.Once
+       );
     }
 
     [Fact]
@@ -250,6 +255,10 @@ public class CustomerServiceTests
            t.UpdatePasswordAsync(It.Is<Customer>(t => t.Id == customerId), It.IsAny<string>()),
            Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+          t.Publish(It.Is<CustomerMessage>(t => t.Id == customer.Id), It.IsAny<CancellationToken>()),
+          Times.Once
+       );
     }
 
     [Fact]
@@ -309,6 +318,10 @@ public class CustomerServiceTests
             It.Is<Customer>(t => t.FirstName == customerUpdateModel.FirstName && t.LastName == customerUpdateModel.LastName)),
             Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+          t.Publish(It.Is<CustomerMessage>(t => t.Id == customer.Id), It.IsAny<CancellationToken>()),
+          Times.Once
+       );
     }
 
     [Fact]
@@ -360,6 +373,10 @@ public class CustomerServiceTests
             t.DeactivateAsync(It.Is<Customer>(t => t.Id == customerId)),
             Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+          t.Publish(It.Is<CustomerMessage>(t => t.Id == customer.Id), It.IsAny<CancellationToken>()),
+          Times.Once
+       );
     }
 
     [Fact]
@@ -378,6 +395,10 @@ public class CustomerServiceTests
             t.ActivateAsync(It.Is<Customer>(t => t.Id == customerId)),
             Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+          t.Publish(It.Is<CustomerMessage>(t => t.Id == customer.Id), It.IsAny<CancellationToken>()),
+          Times.Once
+       );
     }
 
     [Fact]
@@ -401,6 +422,10 @@ public class CustomerServiceTests
             t.SetManualVipAsync(It.Is<Customer>(t => t.Id == customerId), It.IsAny<DateTime>(), It.IsAny<List<Account>>()),
             Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+          t.Publish(It.Is<CustomerMessage>(t => t.Id == customer.Id), It.IsAny<CancellationToken>()),
+          Times.Once
+       );
     }
 
     [Fact]
@@ -455,6 +480,10 @@ public class CustomerServiceTests
             t.BatchUpdateRoleAsync(It.IsAny<List<Guid>>()),
             Times.Once
         );
+        _publishEndpointMock.Verify(t =>
+          t.Publish(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()),
+          Times.Once
+       );
     }
 
     [Fact]

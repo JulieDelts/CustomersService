@@ -7,9 +7,11 @@ using CustomersService.Core;
 using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MYPBackendMicroserviceIntegrations.Enums;
+using MYPBackendMicroserviceIntegrations.Messages;
 
 namespace CustomersService.Application.Services;
 
@@ -18,10 +20,10 @@ public class AccountService(
         IMapper mapper,
         CustomerUtils customerUtils,
         AccountUtils accountUtils,
-         RabbitMqPublishUtils rabbitMqUtils,
         ILogger<AccountService> logger,
         ICommonHttpClient httpClient,
-        IOptions<TransactionStoreApiConnectionStrings> options) 
+        IPublishEndpoint publishEndpoint,
+        IOptions<TransactionStoreApiConnectionStrings> options)
     : IAccountService
 {
     private readonly string controllerPath = options.Value?.Accounts;
@@ -65,7 +67,8 @@ public class AccountService(
         accountToCreateDto.Customer = customerDto;
 
         await accountRepository.CreateAsync(accountToCreateDto);
-        await rabbitMqUtils.PublishAccountUpdateAsync(accountToCreateDto);
+        await PublishAccountUpdateAsync(accountToCreateDto);
+
         logger.LogInformation("Account created successfully with ID {AccountId}", accountToCreateDto.Id);
 
         return accountToCreateDto.Id;
@@ -97,6 +100,7 @@ public class AccountService(
         var account = mapper.Map<AccountFullInfoModel>(accountDto);
         var accountBalanceModel = await httpClient.SendGetRequestAsync<BalanceResponse>($"{controllerPath}/{id}/balance");
         account.Balance = accountBalanceModel.Balance;
+
         logger.LogInformation("Successfully retrieved full account info for account {AccountId}", id);
 
         return account;
@@ -132,7 +136,8 @@ public class AccountService(
         }
 
         await accountRepository.DeactivateAsync(accountDto);
-        await rabbitMqUtils.PublishAccountUpdateAsync(accountDto);
+        await PublishAccountUpdateAsync(accountDto);
+
         logger.LogInformation("Successfully deactivated account {AccountId}", id);
     }
 
@@ -142,7 +147,19 @@ public class AccountService(
 
         var accountDto = await accountUtils.GetByIdAsync(id);
         await accountRepository.ActivateAsync(accountDto);
-        await rabbitMqUtils.PublishAccountUpdateAsync(accountDto);
+        await PublishAccountUpdateAsync(accountDto);
+
         logger.LogInformation("Successfully activated account {AccountId}", id);
+    }
+    
+    private async Task PublishAccountUpdateAsync(Account account)
+    {
+        var message = mapper.Map<AccountMessage>(account);
+
+        logger.LogInformation("Sending account update with id {id} to RabbitMq", account.Id);
+
+        await publishEndpoint.Publish(message);
+
+        logger.LogInformation("Sent account update with id {id} to RabbitMq", account.Id);
     }
 }
