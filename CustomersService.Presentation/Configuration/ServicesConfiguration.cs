@@ -14,15 +14,6 @@ public static class ServicesConfiguration
         services.AddSwaggerGen();
         services.AddFluentValidationAutoValidation();
         services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
-        services.AddOptions<TransactionStoreApiConnectionStrings>()
-            .Configure<IConfiguration>((options, configuration) =>
-            {
-                var section = configuration.GetSection("TransactionStoreApiConnectionStrings");
-
-                options.BaseUrl = section.GetValue<string>("BaseUrl") ?? string.Empty;
-                options.Accounts = section.GetSection("Endpoints").GetValue<string>("Accounts") ?? string.Empty;
-                options.Transactions = section.GetSection("Endpoints").GetValue<string>("Transactions") ?? string.Empty;
-            });
         services.AddOptions<AuthConfigOptions>()
             .Configure<IConfiguration>((options, configuration) =>
             {
