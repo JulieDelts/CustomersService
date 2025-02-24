@@ -1,6 +1,6 @@
 ﻿namespace CustomersService.Core;
 
-public class RabbitMqOptions
+public class RabbitMq
 {
     public string Host { get; set; }
     public string Name { get; set; }

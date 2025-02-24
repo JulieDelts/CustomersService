@@ -27,10 +27,10 @@ public static class ServicesConfiguration
              options.Accounts = section.GetSection("Endpoints").GetValue<string>("Accounts") ?? string.Empty;
              options.Transactions = section.GetSection("Endpoints").GetValue<string>("Transactions") ?? string.Empty;
          });
-        services.AddOptions<RabbitMqOptions>()
+        services.AddOptions<RabbitMq>()
          .Configure<IConfiguration>((options, configuration) =>
          {
-             var section = configuration.GetSection("RabbitMqOptions");
+             var section = configuration.GetSection("RabbitMq");
              options.Host = section.GetValue<string>("Host") ?? string.Empty;
              options.Name = section.GetValue<string>("Name") ?? string.Empty;
              options.Password = section.GetValue<string>("Password") ?? string.Empty;
@@ -46,15 +46,15 @@ public static class ServicesConfiguration
         {
             x.UsingRabbitMq((context, cfg) =>
             {
-                var rabbitMqOptions = context.GetRequiredService<IOptions<RabbitMqOptions>>().Value;
+                var RabbitMq = context.GetRequiredService<IOptions<RabbitMq>>().Value;
 
-                cfg.Host(rabbitMqOptions.Host, h =>
+                cfg.Host(RabbitMq.Host, h =>
                 {
-                    h.Username(rabbitMqOptions.Name);
-                    h.Password(rabbitMqOptions.Password);
+                    h.Username(RabbitMq.Name);
+                    h.Password(RabbitMq.Password);
                 });
 
-                cfg.ReceiveEndpoint(rabbitMqOptions.RoleUpdaterConsumer, e =>
+                cfg.ReceiveEndpoint(RabbitMq.RoleUpdaterConsumer, e =>
                 {
                     e.Consumer<RoleUpdaterConsumer>(context);
                 });
