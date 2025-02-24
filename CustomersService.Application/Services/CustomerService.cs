@@ -5,8 +5,10 @@ using CustomersService.Application.Models;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 using MYPBackendMicroserviceIntegrations.Enums;
+using MYPBackendMicroserviceIntegrations.Messages;
 
 namespace CustomersService.Application.Services;
 
@@ -16,6 +18,7 @@ public class CustomerService(
         IMapper mapper,
         CustomerUtils customerUtils,
         ICustomerUnitOfWork customerUnitOfWork,
+        IPublishEndpoint publishEndpoint,
         ILogger<CustomerService> logger)
     : ICustomerService
 {
@@ -40,7 +43,20 @@ public class CustomerService(
         try
         {
             await customerUnitOfWork.CreateCustomerAsync(customerDto, accountDto);
+
+            var customerMessage = mapper.Map<CustomerMessage>(customerDto);
+            var accountMessage = mapper.Map<AccountMessage>(accountDto);
+
+            var message = new CustomerWithAccountMessage() { Customer = customerMessage, Account = accountMessage };
+
+            logger.LogInformation("Sending customer and account update with customer id {customerId} and account id {accountId} to RabbitMq", customerDto.Id, accountDto.Id);
+
+            await publishEndpoint.Publish(message);
+
+            logger.LogInformation("Sent customer and account update with customer id {customerId} and account id {accountId} to RabbitMq", customerDto.Id, accountDto.Id);
+
             logger.LogInformation("Customer registered successfully with ID {CustomerId}", customerDto.Id);
+
             return customerDto.Id;
         }
         catch (Exception ex)
@@ -75,6 +91,7 @@ public class CustomerService(
         var customers = mapper.Map<List<CustomerInfoModel>>(customerDtos);
 
         logger.LogInformation("Successfully retrieved {Count} customers", customers.Count);
+
         return customers;
     }
 
@@ -86,6 +103,7 @@ public class CustomerService(
         var customer = mapper.Map<CustomerFullInfoModel>(customerDto);
 
         logger.LogInformation("Successfully retrieved full customer info for customer {CustomerId}", id);
+
         return customer;
     }
 
@@ -105,6 +123,8 @@ public class CustomerService(
         var customerUpdateDto = mapper.Map<Customer>(customerUpdateModel);
 
         await customerRepository.UpdateProfileAsync(customerDto, customerUpdateDto);
+        await PublishCustomerUpdateAsync(customerDto);
+
         logger.LogInformation("Successfully updated profile for customer {CustomerId}", id);
     }
 
@@ -129,6 +149,8 @@ public class CustomerService(
         var password = BCrypt.Net.BCrypt.EnhancedHashPassword(newPassword);
 
         await customerRepository.UpdatePasswordAsync(customerDto, password);
+        await PublishCustomerUpdateAsync(customerDto);
+
         logger.LogInformation("Successfully updated password for customer {CustomerId}", id);
     }
 
@@ -153,6 +175,8 @@ public class CustomerService(
         try
         {
             await customerUnitOfWork.SetManualVipAsync(customerDto, vipExpirationDate, accountsToActivate);
+            await PublishCustomerUpdateAsync(customerDto);
+
             logger.LogInformation("Successfully set VIP status for customer {CustomerId}", id);
         }
         catch (Exception ex)
@@ -171,6 +195,13 @@ public class CustomerService(
         try
         {
             await customerUnitOfWork.BatchUpdateRoleAsync(vipCustomerIds);
+
+            logger.LogInformation("Sending role update with ids {ids} to RabbitMq", string.Join(", ", vipCustomerIds));
+
+            await publishEndpoint.Publish(vipCustomerIds);
+
+            logger.LogInformation("Sent role update with ids {ids} to RabbitMq", string.Join(", ", vipCustomerIds));
+
             logger.LogInformation("Successfully batch updated roles for customers");
         }
         catch (Exception ex)
@@ -188,6 +219,8 @@ public class CustomerService(
         var customerDto = await customerUtils.GetByIdAsync(id);
 
         await customerRepository.DeactivateAsync(customerDto);
+        await PublishCustomerUpdateAsync(customerDto);
+
         logger.LogInformation("Successfully deactivated customer {CustomerId}", id);
     }
 
@@ -198,7 +231,20 @@ public class CustomerService(
         var customerDto = await customerUtils.GetByIdAsync(id);
 
         await customerRepository.ActivateAsync(customerDto);
+        await PublishCustomerUpdateAsync(customerDto);
+
         logger.LogInformation("Successfully activated customer {CustomerId}", id);
+    }
+
+    private async Task PublishCustomerUpdateAsync(Customer customer)
+    {
+        var message = mapper.Map<CustomerMessage>(customer);
+
+        logger.LogInformation("Sending customer update with id {id} to RabbitMq", customer.Id);
+
+        await publishEndpoint.Publish(message);
+
+        logger.LogInformation("Sent customer update with id {id} to RabbitMq", customer.Id);
     }
 
     private string MaskEmail(string email)
