@@ -85,6 +85,8 @@ public class TransactionService(
             logger.LogWarning("Customer with id {CustomerId} is deactivated", customer.Id);
             throw new EntityConflictException($"Customer with id {customer.Id} is deactivated.");
         }
+
+        requestModel.Currency = account.Currency;
     }
 
     private async Task ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
