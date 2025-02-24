@@ -245,7 +245,7 @@ public class AccountServiceTests
                 AccountId = accountId,
                 Amount = 100,
                 Date = DateTime.Now,
-                TransactionType = TransactionType.Deposit
+                Type = TransactionType.Deposit
             }
         };
         _accountRepositoryMock.Setup(t => t.GetByConditionAsync(c => c.Id == accountId)).ReturnsAsync(account);

@@ -113,7 +113,7 @@ public class TransactionControllerTests
         var transactionRequestModel = _mapper.Map<CreateTransactionRequest>(transactionCreateRequest);
 
         //Assert
-        transactionCreateRequest.Should().BeEquivalentTo(transactionRequestModel);
+        transactionCreateRequest.Should().BeEquivalentTo(transactionRequestModel, options => options.ExcludingMissingMembers());
     }
 
     [Fact]

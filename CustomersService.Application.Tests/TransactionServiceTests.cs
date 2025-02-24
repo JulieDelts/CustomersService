@@ -52,7 +52,7 @@ public class TransactionServiceTests
             AccountId = Guid.NewGuid(),
             Amount = 100,
             Date = DateTime.Now,
-            TransactionType = TransactionType.Deposit
+            Type = TransactionType.Deposit
         };
         _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<TransactionResponse>($"{null}/{id}")).ReturnsAsync(transaction);
 
