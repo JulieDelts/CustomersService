@@ -44,6 +44,8 @@ public static class ServicesConfiguration
         });
         services.AddMassTransit(x =>
         {
+            x.AddConsumer<RoleUpdaterConsumer>();
+
             x.UsingRabbitMq((context, cfg) =>
             {
                 var RabbitMq = context.GetRequiredService<IOptions<RabbitMq>>().Value;

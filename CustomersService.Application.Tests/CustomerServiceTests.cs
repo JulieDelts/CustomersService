@@ -481,7 +481,7 @@ public class CustomerServiceTests
             Times.Once
         );
         _publishEndpointMock.Verify(t =>
-          t.Publish(It.IsAny<List<Guid>>(), It.IsAny<CancellationToken>()),
+          t.Publish(It.IsAny<CustomerRoleUpdateIdsReportingMessage>(), It.IsAny<CancellationToken>()),
           Times.Once
        );
     }

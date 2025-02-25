@@ -190,7 +190,6 @@ public class CustomerService(
     public async Task BatchUpdateRoleAsync(List<Guid> vipCustomerIds)
     {
         logger.LogInformation("Batch updating roles for VIP customers");
-        logger.LogTrace("VIP customer IDs: {@VipCustomerIds}", vipCustomerIds);
 
         try
         {
@@ -198,10 +197,11 @@ public class CustomerService(
 
             logger.LogInformation("Sending role update with ids {ids} to RabbitMq", string.Join(", ", vipCustomerIds));
 
-            await publishEndpoint.Publish(vipCustomerIds);
+            var message = new CustomerRoleUpdateIdsReportingMessage() { VipCustomerIds = vipCustomerIds };
+
+            await publishEndpoint.Publish(message);
 
             logger.LogInformation("Sent role update with ids {ids} to RabbitMq", string.Join(", ", vipCustomerIds));
-
             logger.LogInformation("Successfully batch updated roles for customers");
         }
         catch (Exception ex)
