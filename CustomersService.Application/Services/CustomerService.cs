@@ -24,13 +24,13 @@ public class CustomerService(
 {
     public async Task<Guid> RegisterAsync(CustomerRegistrationModel customerToRegister)
     {
-        logger.LogInformation("Registering customer with email {Email}", MaskEmail(customerToRegister.Email));
+        logger.LogInformation("Registering customer with email {Email}", LoggerMaskHelper.MaskEmail(customerToRegister.Email));
 
         var customer = await customerRepository.GetByConditionAsync(c => c.Email == customerToRegister.Email);
 
         if (customer != null)
         {
-            logger.LogWarning("Customer with email {Email} already exists", MaskEmail(customerToRegister.Email));
+            logger.LogWarning("Customer with email {Email} already exists", LoggerMaskHelper.MaskEmail(customerToRegister.Email));
             throw new EntityConflictException($"Customer with email {customerToRegister.Email} already exists.");
         }
 
@@ -61,7 +61,7 @@ public class CustomerService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Transaction failed while registering customer with email {Email}", MaskEmail(customerToRegister.Email));
+            logger.LogError(ex, "Transaction failed while registering customer with email {Email}", LoggerMaskHelper.MaskEmail(customerToRegister.Email));
             customerUnitOfWork.Rollback();
             throw new TransactionFailedException("Transaction failed.");
         }
@@ -69,7 +69,7 @@ public class CustomerService(
 
     public async Task<string> AuthenticateAsync(string email, string password)
     {
-        logger.LogInformation("Authenticating customer with email {Email}", MaskEmail(email));
+        logger.LogInformation("Authenticating customer with email {Email}", LoggerMaskHelper.MaskEmail(email));
 
         var customer = await customerRepository.GetByConditionAsync(c => c.Email == email);
 
@@ -245,17 +245,5 @@ public class CustomerService(
         await publishEndpoint.Publish(message);
 
         logger.LogInformation("Sent customer update with id {id} to RabbitMq", customer.Id);
-    }
-
-    private string MaskEmail(string email)
-    {
-        var atIndex = email.IndexOf('@');
-        if (atIndex <= 1)
-        {
-            return email;
-        }
-
-        var maskedEmail = email.Substring(0, 1) + new string('*', atIndex - 1) + email.Substring(atIndex);
-        return maskedEmail;
     }
 }

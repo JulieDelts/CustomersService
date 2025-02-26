@@ -2,7 +2,6 @@
 using AutoMapper;
 using CustomersService.Application.Interfaces;
 using CustomersService.Core.IntegrationModels.Requests;
-using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Presentation.Controllers;
 using CustomersService.Presentation.Mappings;
 using CustomersService.Presentation.Models.Requests;
@@ -30,27 +29,6 @@ public class TransactionControllerTests
         });
         _mapper = new Mapper(config);
         _sut = new TransactionController(_transactionServiceMock.Object, _mapper);
-    }
-
-    [Fact]
-    public async Task GetById_GetSuccess()
-    {
-        // Arrange
-        var expectedStatusCode = HttpStatusCode.OK;
-        var id = Guid.NewGuid();
-        var transaction = new TransactionResponse();
-        _transactionServiceMock.Setup(t => t.GetByIdAsync(id)).ReturnsAsync(transaction);
-
-        //Act
-        var result = await _sut.GetByIdAsync(id);
-        var statusCode = (result.Result as ObjectResult).StatusCode;
-
-        //Assert
-        Assert.IsType<ActionResult<TransactionResponse>>(result);
-        Assert.Equal((int)expectedStatusCode, statusCode);
-        _transactionServiceMock.Verify(t =>
-           t.GetByIdAsync(id),
-           Times.Once);
     }
 
     [Fact]

@@ -43,11 +43,4 @@ public class TransactionController(
         var transactionIds = await transactionService.CreateTransferTransactionAsync(transactionModel, customerId);
         return Ok(transactionIds);
     }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<TransactionResponse>> GetByIdAsync([FromRoute] Guid id)
-    {
-        var transaction = await transactionService.GetByIdAsync(id);
-        return Ok(transaction);
-    }
 }
