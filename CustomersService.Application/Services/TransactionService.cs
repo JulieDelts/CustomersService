@@ -3,7 +3,6 @@ using CustomersService.Application.Interfaces;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
 using CustomersService.Core.IntegrationModels.Requests;
-using CustomersService.Core.IntegrationModels.Responses;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MYPBackendMicroserviceIntegrations.Enums;
@@ -20,13 +19,6 @@ public class TransactionService(
 {
     private readonly string controllerPath = options.Value?.Transactions;
 
-    public async Task<TransactionResponse> GetByIdAsync(Guid id)
-    {
-        logger.LogInformation("Retrieving transaction with ID {TransactionId}", id);
-        var transaction = await httpClient.SendGetRequestAsync<TransactionResponse>($"{controllerPath}/{id}");
-        return transaction;
-    }
-
     public async Task<Guid> CreateSimpleTransactionAsync(CreateTransactionRequest requestModel, Guid customerId, TransactionType transactionType)
     {
         string path;
@@ -38,7 +30,7 @@ public class TransactionService(
 
         logger.LogInformation("Creating simple transaction for account {AccountId}", requestModel.AccountId);
 
-        await ValidateSimpleTransactionRequestAsync(requestModel, customerId);
+        await SetupSimpleTransactionRequestAsync(requestModel, customerId);
 
         var transactionId = await httpClient.SendPostRequestAsync<CreateTransactionRequest, Guid>(path, requestModel);
         logger.LogInformation("Successfully created transaction with ID {TransactionId}", transactionId);
@@ -49,14 +41,14 @@ public class TransactionService(
     {
         logger.LogInformation("Creating transfer transaction from account {FromAccountId} to account {ToAccountId}", requestModel.FromAccountId, requestModel.ToAccountId);
 
-        await ValidateTransferTransactionRequestAsync(requestModel, customerId);
+        await SetupTransferTransactionRequestAsync(requestModel, customerId);
 
         var transactionIds = await httpClient.SendPostRequestAsync<CreateTransferTransactionRequest, List<Guid>>($"{controllerPath}/transfer", requestModel);
         logger.LogInformation("Successfully created transfer transactions with IDs {TransactionIds}", transactionIds);
         return transactionIds;
     }
 
-    private async Task ValidateSimpleTransactionRequestAsync(CreateTransactionRequest requestModel, Guid customerId)
+    private async Task SetupSimpleTransactionRequestAsync(CreateTransactionRequest requestModel, Guid customerId)
     {
         var account = await accountUtils.GetByIdAsync(requestModel.AccountId);
 
@@ -89,10 +81,9 @@ public class TransactionService(
         requestModel.Currency = account.Currency;
     }
 
-    private async Task ValidateTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
+    private async Task SetupTransferTransactionRequestAsync(CreateTransferTransactionRequest requestModel, Guid customerId)
     {
         var fromAccount = await accountUtils.GetByIdAsync(requestModel.FromAccountId);
-
         var toAccount = await accountUtils.GetByIdAsync(requestModel.ToAccountId);
 
         if (toAccount.IsDeactivated)

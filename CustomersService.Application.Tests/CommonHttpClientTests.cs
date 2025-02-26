@@ -114,7 +114,6 @@ public class CommonHttpClientTests
         Assert.Equal(message, exception.Message);
     }
 
-
     [Fact]
     public async Task SendPostRequestAsync_RequestErrorReturned_ServiceUnavailableExceptionThrown()
     {

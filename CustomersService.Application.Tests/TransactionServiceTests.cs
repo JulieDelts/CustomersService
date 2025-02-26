@@ -4,7 +4,6 @@ using CustomersService.Application.Services;
 using CustomersService.Application.Services.ServicesUtils;
 using CustomersService.Core;
 using CustomersService.Core.IntegrationModels.Requests;
-using CustomersService.Core.IntegrationModels.Responses;
 using CustomersService.Persistence.Entities;
 using CustomersService.Persistence.Interfaces;
 using FluentAssertions;
@@ -39,31 +38,6 @@ public class TransactionServiceTests
             _transactionServiceLoggerMock.Object,
             _commonHttpClientMock.Object,
             new Mock<IOptions<TransactionStoreApiConnectionStrings>>().Object);
-    }
-
-    [Fact]
-    public async Task GetByIdAsync_GetSuccess()
-    {
-        //Arrange
-        var id = Guid.NewGuid();
-        var transaction = new TransactionResponse()
-        {
-            Id = id,
-            AccountId = Guid.NewGuid(),
-            Amount = 100,
-            Date = DateTime.Now,
-            Type = TransactionType.Deposit
-        };
-        _commonHttpClientMock.Setup(t => t.SendGetRequestAsync<TransactionResponse>($"{null}/{id}")).ReturnsAsync(transaction);
-
-        //Act 
-        var result = await _sut.GetByIdAsync(id);
-
-        //Assert
-        transaction.Should().BeEquivalentTo(result);
-        _commonHttpClientMock.Verify(t =>
-        t.SendGetRequestAsync<TransactionResponse>(It.IsAny<string>()),
-            Times.Once);
     }
 
     [Fact]
